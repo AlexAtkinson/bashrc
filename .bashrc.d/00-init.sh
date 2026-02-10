@@ -2,7 +2,7 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # FILE                : 00-init.sh
 # DESCRIPTION         : Core initialization and foundational functions
-# REPO                : https://gist.github.com/AlexAtkinson/bc765a0c143ab2bba69a738955d90abd
+# REPO                : https://github.com/AlexAtkinson/bashrc
 # LICENSE             : GPLv3
 # COPYRIGHT           : Copyright © 2026 Alex Atkinson. All Rights Reserved.
 #
@@ -162,8 +162,9 @@ rc() {
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 __check_for_bashrc_user_gist_update() {
   local CADENCE_FILE LOCAL_VERSION LOCAL_FILE REMOTE_VERSION REMOTE_FILE_URL CACHED_RESULT_FILE
-  LOCAL_FILE="$HOME/.bashrc_user_gist"
-  REMOTE_FILE_URL="https://gist.githubusercontent.com/AlexAtkinson/bc765a0c143ab2bba69a738955d90abd/raw/.bashrc"
+  LOCAL_FILE="$HOME/.bashrc.yaml"
+  # TODO: move to user_context.sh
+  REMOTE_FILE_URL="https://raw.githubusercontent.com/AlexAtkinson/bashrc/refs/heads/main/.bashrc.yaml"
   CADENCE_FILE="/tmp/${USER}_bashrc_version_check_timer"
   [[ ! -f "$CADENCE_FILE" ]] && touch "$CADENCE_FILE"
   CACHED_RESULT_FILE="/tmp/${USER}_bashrc_version_cached_result"
@@ -177,8 +178,10 @@ __check_for_bashrc_user_gist_update() {
     cat "$CACHED_RESULT_FILE"
     return 0
   fi
-  LOCAL_VERSION=$(grep -m1 '^# VERSION' "$LOCAL_FILE" | cut -d: -f2-)
-  REMOTE_VERSION=$(curl -sS -r 0-400 "$REMOTE_FILE_URL" | grep -m1 '^# VERSION' | cut -d: -f2-)
+  #LOCAL_VERSION=$(grep -m1 '^# VERSION' "$LOCAL_FILE" | cut -d: -f2-)
+  LOCAL_VERSION=$(yq .version "$LOCAL_FILE")
+  #REMOTE_VERSION=$(curl -sS -r 0-400 "$REMOTE_FILE_URL" | grep -m1 '^# VERSION' | cut -d: -f2-)
+  REMOTE_VERSION=$(curl -sS "$REMOTE_FILE_URL" | yq .version)
   if [[ "$LOCAL_VERSION" != "$REMOTE_VERSION" ]]; then
     loggerx NOTICE ".bashrc_user_gist update available. Local: $LOCAL_VERSION | Remote: $REMOTE_VERSION." | \
     tee "$CACHED_RESULT_FILE"

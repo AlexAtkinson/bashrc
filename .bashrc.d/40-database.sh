@@ -2,7 +2,7 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # FILE                : 40-database.sh
 # DESCRIPTION         : Database-related functions and aliases
-# REPO                : https://gist.github.com/AlexAtkinson/bc765a0c143ab2bba69a738955d90abd
+# REPO                : https://github.com/AlexAtkinson/bashrc
 # LICENSE             : GPLv3
 # COPYRIGHT           : Copyright © 2026 Alex Atkinson. All Rights Reserved.
 #
