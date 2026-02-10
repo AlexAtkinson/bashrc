@@ -2,7 +2,7 @@
 # THIS IS PURELY FOR PERSONAL USE.
 # SEE README.md FOR DETAILS.
 ---
-version: 0
+version: 5
 description: "User Bash Configuration File"
 repo: "https://gist.github.com/AlexAtkinson/bc765a0c143ab2bba69a738955d90abd"
 license: GPLv3

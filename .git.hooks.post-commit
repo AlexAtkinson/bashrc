@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+
+# Iterate the VERSION metadata in bashrc.yaml.
+# This simply uses the commit count as the version number.
+# This is fine for this use case. Similar to build number.
+#   REF: https://gist.github.com/AlexAtkinson/7be00d6be71fab970210006b9574e1e5
+# Operational notes:
+#   - This hook does not create a new commit, it amends the last commit.
+#   - This hook cannot reference its own commit message to avoid infinite loops.
+#   - This compares the local VERSION metadata against the remote gist VERSION metadata.
+#   - Due to the latency which may occur when pushing to remote repos,
+#     a cadence file is used to limit how often this runs.
+#     - This mitigates api rate limit issues.
+#     - This also loop-breaks this hook from amending multiple times in quick succession.
+#   - Don't forget that hooks operate in the root directory of the repo.
+
+
+__auto_version() {
+  local LOCAL_VERSION LOCAL_FILE REMOTE_VERSION REMOTE_FILE_URL VERSION CADENCE_FILE
+
+  # Don't run more than once every 2 seconds
+  CADENCE_FILE=".git/hooks/.post-commit_autover-cadence.tmp"
+  [[ ! -f "$CADENCE_FILE" ]] && touch "$CADENCE_FILE"
+  if [[ $(( $(date +%s) - $(stat "$CADENCE_FILE" -c %Y) )) -le 2 ]]; then
+    #for i in {1..5}; do
+    #  printf "\r%s" "Rate limit exceeded. Continuing in $(( 6 - $i ))..."
+    #  sleep 1
+    #done
+    return
+  fi
+  touch "$CADENCE_FILE"
+
+  VERSION=$(($(git rev-list --count --all)+1))
+  LOCAL_FILE=".bashrc.yaml"
+  REMOTE_FILE_URL="https://raw.githubusercontent.com/AlexAtkinson/bashrc/refs/heads/main/.bashrc.yaml"
+  LOCAL_VERSION=$(yq .version "$LOCAL_FILE")
+  REMOTE_VERSION=$(curl -sS "$REMOTE_FILE_URL" | yq .version)
+
+  echo "Auto-version: (local: $LOCAL_VERSION, remote: $REMOTE_VERSION). Updating to $VERSION..."
+  yq -i ".version = $VERSION" .bashrc.yaml
+  git add .bashrc.yaml
+  git commit --amend -C HEAD --no-verify
+}
+__auto_version
