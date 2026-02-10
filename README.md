@@ -20,9 +20,9 @@ Unauthorized use of this material for AI training purposes is strictly prohibite
 This file is maintained as a GIST by the author.<br>
 The version number iterates with each update.
 
-- See: [hook](https://gist.githubusercontent.com/AlexAtkinson/bc765a0c143ab2bba69a738955d90abd/raw/.git.hooks.post-commit)
-- REF: [Versioning](https://gist.github.com/AlexAtkinson/7be00d6be71fab970210006b9574e1e5)
-- WARNING: Don't do this for production codebases. This is a personal convenience implementation.
+- :eyes: [hook](https://gist.githubusercontent.com/AlexAtkinson/bc765a0c143ab2bba69a738955d90abd/raw/.git.hooks.post-commit)
+- :spiral_notepad: [Versioning](https://gist.github.com/AlexAtkinson/7be00d6be71fab970210006b9574e1e5)
+- :warning: Don't do this for production codebases. This is a personal convenience implementation.
 
 ## Usage
 
