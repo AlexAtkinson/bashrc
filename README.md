@@ -7,7 +7,7 @@ These bashrc runtime configurations are implemented with modularity to improve o
 > While these are my personal runtime configs, they may be used by anyone. Fork away. Observe the license.
 
 > [!CAUTION]
-> Remember, don't commit credentials. Use [infisical](https://github.com/Infisical/infisical), [Dashlane CLI](https://cli.dashlane.com), [KSM](https://docs.keeper.io/en/keeperpam/secrets-manager/secrets-manager-command-line-interface), etc.
+> Remember, don't commit credentials. Use [infisical](https://github.com/Infisical/infisical), [Dashlane CLI](https://cli.dashlane.com), [chamber](https://github.com/segmentio/chamber), [KSM](https://docs.keeper.io/en/keeperpam/secrets-manager/secrets-manager-command-line-interface), etc.
 
 ## Artificial Intelligence Notice
 
@@ -110,6 +110,7 @@ Denoted by a header wrapped in '# ~~~...' 60 columns wide.
 - Adheres (roughly) to Google's bash style guide.
 - Content: As required -- IE:
   - Wrap: Optional
+    <!-- markdownlint-disable MD031 -->
     ```bash
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # Retrieves cheese from the moon.
@@ -176,6 +177,7 @@ Provided as reference material to ensure consistency across scripts and function
 
 > [!IMPORTANT]
 > There are a number of standards dating back to the early days of computing -- understandably, implementations of the time fail to satisfy the scale and use cases of modern computing. TCP stack tuning is one example, where default values persist today that were designed for dial-up connections.
+<!-- markdownlint-disable MD-028 -->
 
 > [!NOTE]
 > Why is AI terrible at BASH?<br>
@@ -196,38 +198,38 @@ Some examples of where this confusion manifests:
 
 #### The International System of Units (SI) defines the decimal prefixes
 
-| Unit | Abbreviation | Notation | Integer |
-| --- | --- | --- | --- |
-| kilo | k          | 10^3     | 1,000 |
-| mega | M          | 10^6     | 1,000,000 |
-| giga | G          | 10^9     | 1,000,000,000 |
-| tera | T          | 10^12    | 1,000,000,000,000 |
-| peta | P          | 10^15    | 1,000,000,000,000,000 |
-| exa  | E          | 10^18    | 1,000,000,000,000,000,000 |
-| zetta| Z          | 10^21    | 1,000,000,000,000,000,000,000 |
-| yotta| Y          | 10^24    | 1,000,000,000,000,000,000,000,000 |
+| Unit  | Abbreviation | Notation | Integer                           |
+| ----- | ------------ | -------- | --------------------------------- |
+| kilo  | k            | 10^3     | 1,000                             |
+| mega  | M            | 10^6     | 1,000,000                         |
+| giga  | G            | 10^9     | 1,000,000,000                     |
+| tera  | T            | 10^12    | 1,000,000,000,000                 |
+| peta  | P            | 10^15    | 1,000,000,000,000,000             |
+| exa   | E            | 10^18    | 1,000,000,000,000,000,000         |
+| zetta | Z            | 10^21    | 1,000,000,000,000,000,000,000     |
+| yotta | Y            | 10^24    | 1,000,000,000,000,000,000,000,000 |
 
 #### The International Electrotechnical Commission (IEC) defines the binary prefixes
 
-| Unit | Abbreviation | Notation | Integer |
-| --- | --- | --- | --- |
-| kibi | Ki | 2^10 | 1,024 |
-| mebi | Mi | 2^20 | 1,048,576 |
-| gibi | Gi | 2^30 | 1,073,741,824 |
-| tebi | Ti | 2^40 | 1,099,511,627,776 |
-| pebi | Pi | 2^50 | 1,125,899,906,842,624 |
-| exbi | Ei | 2^60 | 1,152,921,504,606,846,976 |
-| zebi | Zi | 2^70 | 1,180,591,620,717,411,303,424 |
-| yobi | Yi | 2^80 | 1,208,925,819,614,629,174,706,176 |
+| Unit | Abbreviation | Notation | Integer                           |
+| ---- | ------------ | -------- | --------------------------------- |
+| kibi | Ki           | 2^10     | 1,024                             |
+| mebi | Mi           | 2^20     | 1,048,576                         |
+| gibi | Gi           | 2^30     | 1,073,741,824                     |
+| tebi | Ti           | 2^40     | 1,099,511,627,776                 |
+| pebi | Pi           | 2^50     | 1,125,899,906,842,624             |
+| exbi | Ei           | 2^60     | 1,152,921,504,606,846,976         |
+| zebi | Zi           | 2^70     | 1,180,591,620,717,411,303,424     |
+| yobi | Yi           | 2^80     | 1,208,925,819,614,629,174,706,176 |
 
 #### Abbreviation Notes
 
-| Abbreviation | Description | Use |
-| --- | --- | --- |
-| b (bit)        | A single bit (0 or 1).                | Used for data transfer rates. |
-| B (Byte)       | 8 bits.                               | Used for data at rest, or data capacities. (storage) |
-| Mb (Megabit)   | One million (10^6) bits.              | Used for data transfer rates. |
-| MB (Megabyte)  | A decimal Megabyte (10^6: 1,000,000). | Used for data at rest, or data capacities. (storage) |
+| Abbreviation   | Description                           | Use                                                                                    |
+| -------------- | ------------------------------------- | -------------------------------------------------------------------------------------- |
+| b (bit)        | A single bit (0 or 1).                | Used for data transfer rates.                                                          |
+| B (Byte)       | 8 bits.                               | Used for data at rest, or data capacities. (storage)                                   |
+| Mb (Megabit)   | One million (10^6) bits.              | Used for data transfer rates.                                                          |
+| MB (Megabyte)  | A decimal Megabyte (10^6: 1,000,000). | Used for data at rest, or data capacities. (storage)                                   |
 | MiB (Mebibyte) | A binary Mebibyte (2^20: 1,048,576).  | Introduced specifically to be more accurate for data at rest and capacities. (storage) |
 
 The examples above include MEGA only. The same principles apply to other prefixes.<br>
