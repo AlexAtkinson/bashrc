@@ -25,6 +25,7 @@
 
 # shellcheck disable=1090
 source <(kubectl completion bash)                           # Enable kubectl bash completion
+export KUBE_EDITOR="vim"
 
 alias k=kubectl
 alias kdelp="kubectl delete pod"
