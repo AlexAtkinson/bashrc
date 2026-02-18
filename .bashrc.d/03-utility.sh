@@ -109,6 +109,7 @@ for i in range(0x10FFFF):
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 __working() {
   local args="$*"
+  # shellcheck disable=SC2206
   local symbols=( ${args} )
   [[ "$args" =~ "spinner" ]] && local spin='true'
   # shellcheck disable=2206
@@ -1227,11 +1228,11 @@ EOF
 # Cyclomatic Complexity: 6
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 bytesTo() {
-    local input unit i d s descimal_S descimal_S_multiplier binary_S binary_S_multiplier index system multiplier
+    local input unit i d s decimal_S decimal_S_multiplier binary_S binary_S_multiplier index system multiplier
     binary_S=("Bytes" "KiB" "MiB" "GiB" "TiB" "PiB" "EiB" "YiB" "ZiB")
     binary_S_multiplier=(0 1024 1048576 1073741824 1099511627776 1125899906842624 1152921504606846976 1180591620717411303424)
-    descimal_S=("Bytes" "KB" "MB" "GB" "TB" "PB" "EB" "YB" "ZB")
-    descimal_S_multiplier=(0 1000 1000000 1000000000 1000000000000 1000000000000000 1000000000000000000 1000000000000000000000)
+    decimal_S=("Bytes" "KB" "MB" "GB" "TB" "PB" "EB" "YB" "ZB")
+    decimal_S_multiplier=(0 1000 1000000 1000000000 1000000000000 1000000000000000 1000000000000000000 1000000000000000000000)
     if [[ -n "$1" ]] && [[ "$1" =~ ^[0-9]+$ ]]; then
         bytes="$1"
     elif [[ ! -t 0 ]]; then
@@ -1239,7 +1240,7 @@ bytesTo() {
     fi
     if [[ -n "$2" ]] && [[ " ${binary_S[*]} " == *" $2 "* ]]; then
         unit="$2"
-    elif [[ -n "$2" ]] && [[ " ${descimal_S[*]} " == *" $2 "* ]]; then
+    elif [[ -n "$2" ]] && [[ " ${decimal_S[*]} " == *" $2 "* ]]; then
         unit="$2"
     elif [[ ! "$1" =~ ^[0-9]+$ ]] && [[ -z "$unit" ]]; then
         unit="$1"
@@ -1252,11 +1253,11 @@ bytesTo() {
     if [[ " ${binary_S[*]} " == *" $unit "* ]]; then
       S=("${binary_S[@]}")
       system="binary"
-    elif [[ " ${descimal_S[*]} " == *" $unit "* ]]; then
-      S=("${descimal_S[@]}")
-      system="descimal"
+    elif [[ " ${decimal_S[*]} " == *" $unit "* ]]; then
+      S=("${decimal_S[@]}")
+      system="decimal"
     else
-      loggerx ERROR "Unit must be one of: ${binary_S[*]}, ${descimal_S[*]}"
+      loggerx ERROR "Unit must be one of: ${binary_S[*]}, ${decimal_S[*]}"
       return 1
     fi
     for index in "${!S[@]}"; do
@@ -1265,7 +1266,7 @@ bytesTo() {
         if [[ "$system" == "binary" ]]; then
           multiplier=${binary_S_multiplier[$index]}
         else
-          multiplier=${descimal_S_multiplier[$index]}
+          multiplier=${decimal_S_multiplier[$index]}
         fi
         i=$(( i / multiplier ))
         break
