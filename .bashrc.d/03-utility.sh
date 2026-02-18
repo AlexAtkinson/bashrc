@@ -491,6 +491,7 @@ alias dnote='daily_notes'
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 alias urc='source ~/.bashrc'                                # Update rc in current terminal
 alias c='clear'                                             # keystrokes -- the clicky killer
+alias e='exit'                                              # Exit terminal -- engage LAZY MODE
 command -v batcat >/dev/null 2>&1 && alias bat='batcat'     # Bat alias for Debian-based systems
                                                               # NOTE pager behavior of batcat. Use --paging=never (or -P) to disable.
 command -v bat >/dev/null 2>&1 && alias cat='bat -p'        # Cat alias to use bat if available
@@ -515,7 +516,7 @@ alias watch='watch --color'                                 # Colorize watch
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 alias clipc="xclip -selection c"
 alias clipp="xclip -selection c -o"
-alias clipv="clipp | less"
+alias clipv="xclip | less"
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Tmux Control
