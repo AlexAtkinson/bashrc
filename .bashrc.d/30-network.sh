@@ -283,3 +283,20 @@ url_profile() {
 geoip_lookup() {
   curl -sS "http://api.ipstack.com/$1?access_key=<yourkey>&output=json&fields=country_code,city" | jq -r '"\(.city), \(.country_code)"'
 }
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# CLI Cheats: Network
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+_cli_cheats_network() {
+  cat <<EOF
+  tls-foo <domain>                          - TLS Tools
+  url_profile <url(s)>                      - Profile a URL
+  nmcli device                              - List all nmcli devices
+  nmcli device show <interface>             - Show interface information
+  geoip_lookup <ip_address>                 - Lookup geoip information for an IP address
+  ss -antu | awk 'NR==1 || /LISTEN/'        - List all listening network connections (ss)
+  nmcli connection show                     - Show all nmcli connections
+  ip monitor dev <DEVICE>                   - Monitor a network device for changes
+  ip -br addr                               - Show brief IP address information
+EOF
+}
