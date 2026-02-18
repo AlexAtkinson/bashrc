@@ -264,7 +264,7 @@ git_clone_gist () {
     else
       loggerx INFO "Skipping symbolic link creation."
     fi
-
+    # shellcheck disable=SC2034
     TASK="Return to $OWD"
     cd "$OWD" || false; rc 0
 }
