@@ -39,7 +39,7 @@ fi
 This is best implemented as-code with your system-maintenance tooling.<br>
 IE: [Setup User bashrc](https://gist.github.com/AlexAtkinson/27b12f4dfda31b1b74fcab3fc9a6d192#file-setup-sh-L293)
 
-`00-user-context.sh` & `90-99-*.sh` reserved for manually maintained user configs.
+`00-user-context.sh` & `90-99-*.sh` are specifically reserved for manually maintained user configs, but any level may be used. Including the string '_oob_' (out-of-band) will fully mitigate potential of namespace collisions.
 
 Configurations which are only necessary on occasion may be implemented within the `bashrc.d/on-demand` directory, with a loader being added to `01-on-demand.sh`.
 
