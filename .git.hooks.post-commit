@@ -13,7 +13,8 @@
 #     - This mitigates api rate limit issues.
 #     - This also loop-breaks this hook from amending multiple times in quick succession.
 #   - Don't forget that hooks operate in the root directory of the repo.
-
+#   - REBASE: This hook will run on each commit during a rebase, which will cause issues.
+#             Disable prior to rebasing. Re-enable after.
 
 __auto_version() {
   local LOCAL_VERSION LOCAL_FILE REMOTE_VERSION REMOTE_FILE_URL VERSION CADENCE_FILE
