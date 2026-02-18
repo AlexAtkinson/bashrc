@@ -30,7 +30,9 @@ These files are intended to be sourced by the native user rc file. Example imple
 
 ```bash
 if [ -d ~/.bashrc.d/ ]; then
-  . ~/.bashrc.d/*.sh
+    for f in ~/.bashrc.d/*.sh; do
+        . "$f"
+    done
 fi
 ```
 
