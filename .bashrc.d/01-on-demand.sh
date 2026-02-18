@@ -1,4 +1,4 @@
-# shellcheck shell=bash
+# shellcheck shell=bash disable=SC1090
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # FILE                : 01-on-demand.sh
 # DESCRIPTION         : Git-related functions and aliases
@@ -24,6 +24,5 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 _load_rc_k8s() {
-    # shellcheck source=on-demand/k8s.sh
-    . ~/.bashrc.d/on-demand/k8s.sh
+    . ~/.bashrc.d/on-demand/20-k8s.sh
 }

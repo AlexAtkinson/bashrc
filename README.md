@@ -24,6 +24,16 @@ The version number iterates with each update.
 - :spiral_notepad: [Versioning](https://gist.github.com/AlexAtkinson/7be00d6be71fab970210006b9574e1e5)
 - :warning: Don't do this for production codebases. This is a personal convenience implementation.
 
+## Structure
+
+```
+.bashrc_new          # Main loader file that sources all modules
+bashrc.d/            # Directory containing all module files
+├── on-demand/       # Directory containing on-demand modules
+├── 00-init.sh       # Core initialization & foundational functions
+├── etc.sh
+```
+
 ## Usage
 
 These files are intended to be sourced by the native user rc file. Example implementation in ~/.bashrc:

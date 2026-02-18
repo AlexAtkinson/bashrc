@@ -149,7 +149,7 @@ git-diff() {
 git-search-file-history () {
   local file string
   if [[ $# -ne 2 ]]; then
-    echo "ERROR: Must provide exatly two arguments: <file> <search_string>. Eg:";
+    echo "ERROR: Must provide exactly two arguments: <file> <search_string>. Eg:";
     echo "           ${FUNCNAME[0]} 'path/to/file.txt' 'fooString'"
     return 1;
   fi;
