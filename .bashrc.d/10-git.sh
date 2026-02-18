@@ -225,20 +225,64 @@ alias git_find_the_empty_tree='git hash-object -t tree /dev/null'
 #   git-clone-gist <gist_id>
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 git_clone_gist () {
-    local GIST_ID LINK_NAME OWD GIT_DIR GIST_DIR
+    unset GIST_ID LINK_NAME OWD GIT_DIR GIST_DIR GIST_RAW_DIR RESP EXISTING_LINK
+    local GIST_ID LINK_NAME OWD GIT_DIR GIST_DIR GIST_RAW_DIR RESP EXISTING_LINK
+    [[ -z "$1" ]] && loggerx ERROR "Gist ID must be supplied!" && return 1
     GIST_ID="$1"
     [[ -n "$2" ]] && LINK_NAME="$2"
+    RESP="Y"
     OWD="$PWD"
     GIT_DIR="$HOME/git/alexatkinson"
     GIST_DIR="$GIT_DIR/gists"
+    GIST_RAW_DIR="$GIT_DIR/gists_raw"
+    TASK="CD to $GIST_RAW_DIR"
+    cd "$GIST_RAW_DIR" || false ; rc 0 KILL
+    if [[ -d "$GIST_RAW_DIR/$GIST_ID" ]]; then
+      loggerx ERROR "Gist $GIST_ID already cloned."
+    else
+      TASK="Cloning Gist $GIST_ID"
+      git clone "git@gist.github.com:${GIST_ID}.git"; rc 0 KILL
+    fi
     TASK="CD to $GIST_DIR"
     cd "$GIST_DIR" || false ; rc 0 KILL
-    TASK="Cloning Gist $GIST_ID"
-    git clone "git@gist.github.com:${GIST_ID}.git"; rc 0 KILL
-    TASK="CD to $GIT_DIR"
-    cd "$GIT_DIR" || false ; rc 0 KILL
-    [[ -z "$LINK_NAME" ]] && read -rp "Enter a name for the symbolic link: " LINK_NAME
-    TASK="Creating symbolic link gist_${LINK_NAME} -> $GIST_DIR/$GIST_ID"
-    ln -s "$GIST_DIR/$GIST_ID" "gist_${LINK_NAME}"; rc 0
+    if EXISTING_LINK=$(find . -maxdepth 1 -type l -exec ls -la {} + | grep "$GIST_ID"); then
+      loggerx ERROR "Symbolic link to $GIST_ID already exists."
+        loggerx INFO "LINK: $(echo "$EXISTING_LINK" | awk '{print $9 " -> " $11}')"
+        if ask "Create another symbolic link?" N ; then
+          RESP="Y"
+        else
+          RESP="N"
+        fi
+    fi
+    if [[ -n "$LINK_NAME" ]]; then
+      TASK="Create symbolic link $LINK_NAME -> $GIST_RAW_DIR/$GIST_ID"
+      ln -s "$GIST_RAW_DIR/$GIST_ID" "$LINK_NAME"; rc 0
+    elif [[ -z "$LINK_NAME" && "$RESP" =~ ^[Yy]$ ]]; then
+      read -rp "Enter a name for the symbolic link: " LINK_NAME
+      TASK="Create symbolic link $LINK_NAME -> $GIST_RAW_DIR/$GIST_ID"
+      ln -s "$GIST_RAW_DIR/$GIST_ID" "$LINK_NAME"; rc 0
+    else
+      loggerx INFO "Skipping symbolic link creation."
+    fi
+
+    TASK="Return to $OWD"
     cd "$OWD" || false; rc 0
+}
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Clone all gists from the gist index.
+# Notes:
+#   - Gist index is a simple text file with lines in the format:
+#     <gist_id> <gist_name>
+#   - Clones each gist to ~/git/alexatkinson/gists/<gist_id>
+#   - Creates symbolic link in ~/git/alexatkinson/gist_<gist_name>
+#   - Requires rc and et functions
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+git_clone_all_gists() {
+    local GIT_DIR GIST_DIR GIST_RAW_DIR OWD
+    GIST_INDEX_URL="https://gist.githubusercontent.com/AlexAtkinson/02b087a87973eaa553189734f3397eef/raw/index.dat"
+    # INDEX FORMAT: GIST_ID GIST_NAME
+    while read -r GIST_ID GIST_NAME; do
+      git_clone_gist "$GIST_ID" "$GIST_NAME"
+    done < <(curl -sS "$GIST_INDEX_URL")
 }
