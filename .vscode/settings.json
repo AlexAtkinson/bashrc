@@ -48,5 +48,11 @@
         "Whazzzzzzup",
         "xclip",
         "youtu"
-    ]
+    ],
+    "files.exclude": {
+     "**/.git": false
+    },
+    "search.exclude": {
+        "**/.git": true
+    }
 }

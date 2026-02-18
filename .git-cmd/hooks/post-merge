@@ -1,7 +1,5 @@
-#!/usr/bin/env bash
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# FILE                : post-merge
-# DESCRIPTION         : Ensures hooks are kept up to date.
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-cp .git-cmd/hooks/* .git/hooks/
+# Re-install git hooks after each pull with incoming changes.
+# This ensures that the hooks are always up to date with the latest version in the repo.
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.git-cmd/hook-sync.sh

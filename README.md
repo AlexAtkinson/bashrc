@@ -20,18 +20,25 @@ Unauthorized use of this material for AI training purposes is strictly prohibite
 This file is maintained as a GIST by the author.<br>
 The version number iterates with each update.
 
-- :eyes: [hook](https://gist.githubusercontent.com/AlexAtkinson/bc765a0c143ab2bba69a738955d90abd/raw/.git.hooks.post-commit)
+- :eyes: [hook](.git-cmd/hooks/post-commit)
 - :spiral_notepad: [Versioning](https://gist.github.com/AlexAtkinson/7be00d6be71fab970210006b9574e1e5)
 - :warning: Don't do this for production codebases. This is a personal convenience implementation.
 
 ## Structure
 
-```
-.bashrc_new          # Main loader file that sources all modules
+```data
 bashrc.d/            # Directory containing all module files
 ├── on-demand/       # Directory containing on-demand modules
 ├── 00-init.sh       # Core initialization & foundational functions
 ├── etc.sh
+```
+
+## Setup
+
+A one-time setup script must be run after cloning. This script installs the necessary git hooks for this repo to self-maintain.
+
+```bash
+.git-cmd/hook-sync.sh
 ```
 
 ## Usage
