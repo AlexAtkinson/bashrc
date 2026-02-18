@@ -49,6 +49,7 @@ __update_bashrc() {
   REMOTE_FILE_URL="https://gist.githubusercontent.com/AlexAtkinson/bc765a0c143ab2bba69a738955d90abd/raw/.bashrc"
   TASK="Retrieve remote .bashrc_user_gist"
   curl -sS "$REMOTE_FILE_URL" -o "$LOCAL_FILE.new"; rc 0 KILL
+  # shellcheck disable=SC2034
   TASK="Update local .bashrc_user_gist"
   mv "$LOCAL_FILE.new" "$LOCAL_FILE"; rc 0 KILL
   loggerx SUCCESS ".bashrc_user_gist updated. Run 'source ~/.bashrc_user_gist', or 'urc' to apply."
