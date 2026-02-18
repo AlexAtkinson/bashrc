@@ -160,7 +160,7 @@ rc() {
 #   __update_bashrc
 # Cyclomatic Complexity: 7
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-__check_for_bashrc_user_gist_update() {
+__check_bashrc_update() {
   local CADENCE_FILE LOCAL_VERSION LOCAL_FILE REMOTE_VERSION REMOTE_FILE_URL CACHED_RESULT_FILE
   LOCAL_FILE="$HOME/.bashrc.yaml"
   # TODO: move to user_context.sh
@@ -173,8 +173,8 @@ __check_for_bashrc_user_gist_update() {
   # Exit if within cadence period and cached result was false
   [[ $(( $(date +%s) - $(stat "$CADENCE_FILE" -c %Y) )) -le 10 ]] && [[ ! -s "$CACHED_RESULT_FILE" ]] && return 0
   if [[ $(( $(date +%s) - $(stat "$CADENCE_FILE" -c %Y) )) -le 10 ]] && [[ -s "$CACHED_RESULT_FILE" ]]; then
-    loggerx ERROR "Rate limit exceeded. Outputting cached result.
-                   Try again in $(( 10 - ($(date +%s) - $(stat "$CADENCE_FILE" -c %Y)) )) seconds."
+    loggerx ERROR "${FUNCNAME[*]}: Rate limit exceeded. Using cached result.
+                   Limit resets in: $(( 10 - ($(date +%s) - $(stat "$CADENCE_FILE" -c %Y)) )) seconds."
     cat "$CACHED_RESULT_FILE"
     return 0
   fi
@@ -190,7 +190,7 @@ __check_for_bashrc_user_gist_update() {
   fi
   truncate -s 0 "$CACHED_RESULT_FILE"
 }
-__check_for_bashrc_user_gist_update
+__check_bashrc_update
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # History

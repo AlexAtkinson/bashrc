@@ -44,15 +44,35 @@ alias __check_disk_health='sudo smartctl -a /dev/sda'                           
 # Update .bashrc_user_gist from remote gist
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 __update_bashrc() {
-  local LOCAL_FILE REMOTE_FILE_URL
-  LOCAL_FILE="$HOME/.bashrc_user_gist"
-  REMOTE_FILE_URL="https://gist.githubusercontent.com/AlexAtkinson/bc765a0c143ab2bba69a738955d90abd/raw/.bashrc"
-  TASK="Retrieve remote .bashrc_user_gist"
-  curl -sS "$REMOTE_FILE_URL" -o "$LOCAL_FILE.new"; rc 0 KILL
+  # local LOCAL_FILE REMOTE_FILE_URL
+  # LOCAL_FILE="$HOME/.bashrc_user_gist"
+  # REMOTE_FILE_URL="https://gist.githubusercontent.com/AlexAtkinson/bc765a0c143ab2bba69a738955d90abd/raw/.bashrc"
+  # TASK="Retrieve remote .bashrc_user_gist"
+  # curl -sS "$REMOTE_FILE_URL" -o "$LOCAL_FILE.new"; rc 0 KILL
+  # # shellcheck disable=SC2034
+  # TASK="Update local .bashrc_user_gist"
+  # mv "$LOCAL_FILE.new" "$LOCAL_FILE"; rc 0 KILL
+  # loggerx SUCCESS ".bashrc_user_gist updated. Run 'source ~/.bashrc_user_gist', or 'urc' to apply."
+  TASK="Detect target rc file"; et
+  [[ -f $HOME/.bash_profile && ${SHELL##*/} =~ "bash" ]] && TARG="$HOME/.bash_profile" # MacOS Bash
+  [[ -f $HOME/.zshrc && ${SHELL##*/} =~ "zsh" ]] && TARG="$HOME/.zshrc"                # MacOS ZSH
+  [[ -f $HOME/.bashrc && ${SHELL##*/} =~ "bash" ]] && TARG="$HOME/.bashrc"             # Linux
+  rc 0 KILL
+  BASH_RC_REPO="git@github.com:AlexAtkinson/bashrc.git"
+  BASH_RC_REPO_TMP="$(mktemp -d)"
+  TASK="Ensure $HOME/.bashrc.d directory exists"; et
+  [[ ! -d "$HOME/.bashrc.d" ]] && mkdir "$HOME/.bashrc.d"
+  TASK="Set permissions on $HOME/.bashrc.d"; et
+  chmod 700 "$HOME/.bashrc.d"; rc 0
+  TASK="Clone $BASH_RC_REPO to $BASH_RC_REPO_TMP"; et
+  git clone "$BASH_RC_REPO" "$BASH_RC_REPO_TMP"; rc 0
+  TASK="Copy bashrc files to $HOME/.bashrc.d/"; et
+  rsync -avu "$BASH_RC_REPO_TMP/.bashrc.d/" "$HOME/.bashrc.d/"; rc 0
+  TASK="Update $HOME/.bashrc.yaml"; et
+  cp "$BASH_RC_REPO_TMP/.bashrc.yaml" "$HOME/.bashrc.yaml"; rc 0
   # shellcheck disable=SC2034
-  TASK="Update local .bashrc_user_gist"
-  mv "$LOCAL_FILE.new" "$LOCAL_FILE"; rc 0 KILL
-  loggerx SUCCESS ".bashrc_user_gist updated. Run 'source ~/.bashrc_user_gist', or 'urc' to apply."
+  TASK="Cleanup temporary repository clone"; et
+  rm -rf "$BASH_RC_REPO_TMP"; rc 0
 }
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
