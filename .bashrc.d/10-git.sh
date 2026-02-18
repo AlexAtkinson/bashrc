@@ -225,7 +225,7 @@ alias git_find_the_empty_tree='git hash-object -t tree /dev/null'
 #   git-clone-gist <gist_id>
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 git_clone_gist () {
-    unset GIST_ID LINK_NAME OWD GIT_DIR GIST_DIR GIST_RAW_DIR RESP EXISTING_LINK
+    unset GIST_ID LINK_NAME OWD GIT_DIR GIST_DIR GIST_RAW_DIR RESP EXISTING_LINK TASK
     local GIST_ID LINK_NAME OWD GIT_DIR GIST_DIR GIST_RAW_DIR RESP EXISTING_LINK
     [[ -z "$1" ]] && loggerx ERROR "Gist ID must be supplied!" && return 1
     GIST_ID="$1"
@@ -279,11 +279,18 @@ git_clone_gist () {
 #   - Requires rc and et functions
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 git_clone_all_gists() {
-    local GIT_DIR GIST_DIR GIST_RAW_DIR OWD
+    unset GIT_DIR GIST_DIR GIST_ID GIST_NAME GIST_RAW_DIR OWD GIST_INDEX_URL TMP_FILE
+    local GIT_DIR GIST_DIR GIST_ID GIST_NAME GIST_RAW_DIR OWD GIST_INDEX_URL TMP_FILE
     GIST_INDEX_URL="https://gist.githubusercontent.com/AlexAtkinson/02b087a87973eaa553189734f3397eef/raw/index.dat"
+    TMP_FILE=$(mktemp)
+    curl -sS "$GIST_INDEX_URL" -o "$TMP_FILE"; rc 0 KILL
     # INDEX FORMAT: GIST_ID GIST_NAME
-    while read -r GIST_ID GIST_NAME; do
-      git_clone_gist "$GIST_ID" "$GIST_NAME"
-      sleep 1 # Sleep to mitigate potential rate limit issues
-    done < <(curl -sS "$GIST_INDEX_URL")
+    exec 3< "$TMP_FILE"
+    while read -r GIST_ID GIST_NAME <&3; do
+      [[ -z "$GIST_ID" || "$GIST_ID" =~ ^# ]] && continue
+      git_clone_gist "$GIST_ID" "$GIST_NAME" </dev/null
+      sleep 0.5 # Sleep to mitigate potential rate limit issues
+    done
+    exec 3<&-
+    rm -f "$TMP_FILE"
 }
