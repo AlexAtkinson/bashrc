@@ -284,5 +284,6 @@ git_clone_all_gists() {
     # INDEX FORMAT: GIST_ID GIST_NAME
     while read -r GIST_ID GIST_NAME; do
       git_clone_gist "$GIST_ID" "$GIST_NAME"
+      sleep 1 # Sleep to mitigate potential rate limit issues
     done < <(curl -sS "$GIST_INDEX_URL")
 }
