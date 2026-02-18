@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# FILE                : post-merge
+# DESCRIPTION         : Ensures hooks are kept up to date.
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+cp .git-cmd/hooks/* .git/hooks/

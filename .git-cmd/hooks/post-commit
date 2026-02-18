@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
-
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# FILE                : post-commit
+# DESCRIPTION         : Git post-commit hook to auto-update version in .bashrc.yaml after each commit.
+#
 # Iterate the VERSION metadata in bashrc.yaml.
 # This simply uses the commit count as the version number.
 # This is fine for this use case. Similar to build number.
@@ -15,6 +18,7 @@
 #   - Don't forget that hooks operate in the root directory of the repo.
 #   - REBASE: This hook will run on each commit during a rebase, which will cause issues.
 #             Disable prior to rebasing. Re-enable after.
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 __auto_version() {
   local LOCAL_VERSION LOCAL_FILE REMOTE_VERSION REMOTE_FILE_URL VERSION CADENCE_FILE
