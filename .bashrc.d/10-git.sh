@@ -294,3 +294,28 @@ git_clone_all_gists() {
     exec 3<&-
     rm -f "$TMP_FILE"
 }
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Pull all gists from the gist index.
+# Notes:
+#   - Pulls each gist in ~/git/alexatkinson/gists/<gist_id>
+#   - Requires rc and et functions
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+git_pull_all_gists() {
+    unset GIT_DIR GIST_DIR GIST_ID OWD
+    local GIT_DIR GIST_DIR GIST_ID OWD
+    OWD="$PWD"
+    GIT_DIR="$HOME/git/alexatkinson"
+    GIST_DIR="$GIT_DIR/gists"
+    cd "$GIST_DIR" || false; rc 0 KILL
+    for GIST_ID in */; do
+      [[ -z "$GIST_ID" || "$GIST_ID" =~ ^# ]] && continue
+      TASK="Pulling Gist $GIST_ID"
+      cd "$GIST_ID" || false; rc 0 KILL && git pull; rc 0 KILL
+      cd .. || false; rc 0 KILL
+      sleep 0.5 # Sleep to mitigate potential rate limit issues
+    done
+    # shellcheck disable=SC2034
+    TASK="Return to $OWD"
+    cd "$OWD" || false; rc 0
+}
