@@ -254,7 +254,7 @@ tls-get-chain() {
 url_profile() {
   # shellcheck disable=2048
   for i in $*; do
-    printHeading "$i"
+    printSectionHeader "$i"
     printf '%b\n' "\e[01;39mDNS Records:\e[0m"
     digna "$i"
     printf '%b\n' "\n\e[01;39mRedirects:\e[0m"
