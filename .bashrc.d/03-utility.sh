@@ -509,6 +509,7 @@ batcat_langcolor_help() {
 }
 
 alias less='less -R'                                        # Colorize less
+command -v eza >/dev/null 2>&1 && alias ls='eza --icons --grid --group-directories-first'
 alias l1='ls -1'
 alias watch='watch --color'                                 # Colorize watch
 

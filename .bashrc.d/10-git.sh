@@ -57,10 +57,7 @@ FORCE_JIRA_ID=false
 git-c-prefix() {
   # shellcheck disable=2001,2013
   if [[ $FORCE_JIRA_ID == "true" ]]; then
-    unset branch
-    unset c_message
-    unset branch_pass
-    unset c_message_pass
+    unset branch c_message branch_pass c_message_pass
     branch=$(git rev-parse --abbrev-ref HEAD)
     c_message=$*
     reg='[A-Z]{2,10}-[0-9]{1,7}'
@@ -212,6 +209,17 @@ git-latest-release-assets() {
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 alias git_find_the_empty_tree='git hash-object -t tree /dev/null'
 
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# GIST - Manual mgmt example:
+# while read line; do
+#   link=$(awk '{print $9}'<<<$line)
+#   targ=$(awk '{print $11}'<<<$line)
+#   targ=${targ##*/}
+#   echo "$link -- $targ"
+# done <<<$(ls -la | grep ' -> ')
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Clone a gist
 # Notes:
@@ -225,8 +233,7 @@ alias git_find_the_empty_tree='git hash-object -t tree /dev/null'
 #   git-clone-gist <gist_id>
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 git_clone_gist () {
-    unset GIST_ID LINK_NAME OWD GIT_DIR GIST_DIR GIST_RAW_DIR RESP EXISTING_LINK TASK
-    local GIST_ID LINK_NAME OWD GIT_DIR GIST_DIR GIST_RAW_DIR RESP EXISTING_LINK
+    local GIST_ID LINK_NAME OWD GIT_DIR GIST_DIR GIST_RAW_DIR RESP EXISTING_LINK TASK
     [[ -z "$1" ]] && loggerx ERROR "Gist ID must be supplied!" && return 1
     GIST_ID="$1"
     [[ -n "$2" ]] && LINK_NAME="$2"
@@ -279,7 +286,6 @@ git_clone_gist () {
 #   - Requires rc and et functions
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 git_clone_all_gists() {
-    unset GIT_DIR GIST_DIR GIST_ID GIST_NAME GIST_RAW_DIR OWD GIST_INDEX_URL TMP_FILE
     local GIT_DIR GIST_DIR GIST_ID GIST_NAME GIST_RAW_DIR OWD GIST_INDEX_URL TMP_FILE
     GIST_INDEX_URL="https://gist.githubusercontent.com/AlexAtkinson/02b087a87973eaa553189734f3397eef/raw/index.dat"
     TMP_FILE=$(mktemp)
@@ -302,7 +308,6 @@ git_clone_all_gists() {
 #   - Requires rc and et functions
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 git_pull_all_gists() {
-    unset GIT_DIR GIST_DIR GIST_ID OWD
     local GIT_DIR GIST_DIR GIST_ID OWD
     OWD="$PWD"
     GIT_DIR="$HOME/git/alexatkinson"
@@ -311,7 +316,59 @@ git_pull_all_gists() {
     for GIST_ID in */; do
       [[ -z "$GIST_ID" || "$GIST_ID" =~ ^# ]] && continue
       TASK="Pulling Gist $GIST_ID"
-      cd "$GIST_ID" || false; rc 0 KILL && git pull; rc 0 KILL
+      cd "$GIST_ID" || false; rc 0 KILL
+      git pull; rc 0 KILL
+      cd .. || false; rc 0 KILL
+      sleep 0.5 # Sleep to mitigate potential rate limit issues
+    done
+    # shellcheck disable=SC2034
+    TASK="Return to $OWD"
+    cd "$OWD" || false; rc 0
+}
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Push all gists from the gist index.
+# Notes:
+#   - Pushes each gist in ~/git/alexatkinson/gists/<gist_id>
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+git_push_all_gists() {
+    local GIT_DIR GIST_DIR GIST_ID OWD
+    OWD="$PWD"
+    GIT_DIR="$HOME/git/alexatkinson"
+    GIST_DIR="$GIT_DIR/gists"
+    cd "$GIST_DIR" || false; rc 0 KILL
+    for GIST_ID in */; do
+      [[ -z "$GIST_ID" || "$GIST_ID" =~ ^# ]] && continue
+      TASK="Pushing Gist $GIST_ID"
+      cd "$GIST_ID" || false; rc 0 KILL
+      git push; rc 0 KILL
+      cd .. || false; rc 0 KILL
+      sleep 0.5 # Sleep to mitigate potential rate limit issues
+    done
+    # shellcheck disable=SC2034
+    TASK="Return to $OWD"
+    cd "$OWD" || false; rc 0
+}
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Update copyright in all markdown files, commit, push.
+# Notes:
+#  - Uses md-add-copyright --path ~/git/alexatkinson/gists/ --owner "Alex Atkinson" --detect-year --update
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+git_update_copyright_all_gists() {
+    local GIT_DIR GIST_DIR GIST_ID OWD
+    OWD="$PWD"
+    GIT_DIR="$HOME/git/alexatkinson"
+    GIST_DIR="$GIT_DIR/gists"
+    cd "$GIST_DIR" || false; rc 0 KILL
+    for GIST_ID in */; do
+      [[ -z "$GIST_ID" || "$GIST_ID" =~ ^# ]] && continue
+      TASK="Updating copyright in Gist $GIST_ID"
+      cd "$GIST_ID" || false; rc 0 KILL
+      md-add-copyright --path . --owner "Alex Atkinson" --detect-year --update
+      git add -u; rc 0 KILL
+      git commit -m "Update copyright"; rc 0 KILL
+      git push; rc 0 KILL
       cd .. || false; rc 0 KILL
       sleep 0.5 # Sleep to mitigate potential rate limit issues
     done
