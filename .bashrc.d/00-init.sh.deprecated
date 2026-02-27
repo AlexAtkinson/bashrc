@@ -41,7 +41,7 @@ function dts() {
 #   - $1    Log Level
 #   - $2-   Message
 # Depends On:
-#   - function: dts
+#   - function: dts`
 # Cyclomatic Complexity: 10
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # shellcheck disable=2034,2001

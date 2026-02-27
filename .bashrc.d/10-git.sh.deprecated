@@ -1,0 +1,25 @@
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Clone all gists from the gist index.
+# Notes:
+#   - Gist index is a simple text file with lines in the format:
+#     <gist_id> <gist_name>
+#   - Clones each gist to ~/git/alexatkinson/gists/<gist_id>
+#   - Creates symbolic link in ~/git/alexatkinson/gist_<gist_name>
+#   - Requires rc and et functions
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+git_clone_all_gists() {
+    local GIT_DIR GIST_DIR GIST_ID GIST_NAME GIST_RAW_DIR OWD GIST_INDEX_URL TMP_FILE
+    GIST_INDEX_URL="https://gist.githubusercontent.com/AlexAtkinson/02b087a87973eaa553189734f3397eef/raw/index.dat"
+    TMP_FILE=$(mktemp)
+    curl -sS "$GIST_INDEX_URL" -o "$TMP_FILE"; rc 0 KILL
+    # INDEX FORMAT: GIST_ID GIST_NAME
+    exec 3< "$TMP_FILE"
+    while read -r GIST_ID GIST_NAME <&3; do
+      [[ -z "$GIST_ID" || "$GIST_ID" =~ ^# ]] && continue
+      GIST_CLONE_URL="git@gist.github.com:${GIST_ID}.git"
+      git submodule add "$GIST_CLONE_URL" "$GIST_NAME" </dev/null
+      sleep 0.5 # Sleep to mitigate potential rate limit issues
+    done
+    exec 3<&-
+    rm -f "$TMP_FILE"
+}

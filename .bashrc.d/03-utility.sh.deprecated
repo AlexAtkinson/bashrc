@@ -1,0 +1,85 @@
+# Deprecated by eza
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# List Only Directories. Wrapper for 'ls -d */'
+# Notes:
+#   - Links to directories are output
+# Arguments:
+#   Supported 'ls' arguments which do not require options,
+#   such as -1.
+# Outputs:
+#   List of directories
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+lsd() {
+  local D_RAW ARGS D
+  __load_D() {
+    for i in $D_RAW; do # Ensure all items have a tailing /
+      [[ ! "$i" =~ '/'$ ]] && i="${i}/"
+      D+=("$i")
+    done
+  }
+  __do_lsd() {
+    # shellcheck disable=2035
+    [[ "${D[*]}" == '' ]] &&  ls -"${ARGS}" */ # Do at least once for assumed $PWD
+    for i in "${D[@]}"; do
+      ls -"${ARGS}" "$i"*/
+    done
+  }
+  ARGS='ld'
+  D=()
+  { [[ "${1:0:1}" == '-' ]] && [[ "$1" != "${1/1/}" ]] ; } && ARGS='d' # Remove conflicting list (l) argument
+  [[ "${1:0:1}" == '-' ]] && ARGS="${ARGS}${1#-}"
+  if [[ "${1:0:1}" == '-' ]]; then
+    D_RAW=${*:2}
+    __load_D
+  else
+    D_RAW="$*"
+    __load_D
+  fi
+  __do_lsd
+}
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# List Only Directories. Alternative to lsd
+# Notes:
+#   - Links to directories ARE NOT output.
+# Arguments:
+#   Supported 'ls' arguments which do not require options,
+#   such as -1.
+# Outputs:
+#   List of directories
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ld() {
+  __load_D() {
+    for i in $D_RAW; do
+      D+=("$i")
+    done
+  }
+  __do_ld() {
+    # shellcheck disable=2012
+    if [[ "$ONE" != 'true' ]]; then
+      for i in "${D[@]}"; do
+        ls -"${ARGS}" "$i" | tail -n +4 | grep --color=never '^d'
+      done
+      [[ ${#D[*]} -eq 0 ]] &&  ls -"${ARGS}" | tail -n +4 | grep --color=never '^d' # At least once
+      true
+    else
+      for i in "${D[@]}"; do
+        ls -"${ARGS}" "$i" | tail -n +4 | grep '^d' | awk '{print $NF}'
+      done
+      [[ ${#D[*]} -eq 0 ]] && ls -"${ARGS}" | tail -n +4 | grep '^d' | awk '{print $NF}' # At least once
+      true
+    fi
+  }
+  ARGS='la'
+  D=()
+  { [[ "${1:0:1}" == '-' ]] && [[ "$1" != "${1/1/}" ]] ; } && local ONE='true'
+  [[ "${1:0:1}" == '-' ]] && ARGS="${ARGS}${1#-}"
+  if [[ "${1:0:1}" == '-' ]]; then
+    D_RAW=${*:2}
+    __load_D
+  else
+    D_RAW="$*"
+    __load_D
+  fi
+  __do_ld
+}

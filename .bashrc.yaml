@@ -2,7 +2,7 @@
 # THIS IS PURELY FOR PERSONAL USE.
 # SEE README.md FOR DETAILS.
 ---
-version: 30
+version: 31
 description: "User Bash Configuration File"
 repo: "https://github.com/alexatkinson/bashrc"
 license: GPLv3
