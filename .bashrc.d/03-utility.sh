@@ -308,13 +308,15 @@ color_demo_truecolor() {
 #   Iterates a range of 8-bit colors for demo purposes.
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 __color_demo() {
-  [[ $1 -gt 256 ]] && loggerx WARNING "Max colors: 256"
-  for i in $(seq 1 "$1"); do
+  [[ $# -eq 0 ]] && NUM_COLORS=8 || NUM_COLORS="$1"
+  [[ $NUM_COLORS -gt 256 ]] && loggerx WARNING "Max colors: 256"
+  for i in $(seq 1 "$NUM_COLORS"); do
     printf '\e[48;5;%sm  %03d  \e[0m' "$i" "$i"
     ! (( i % 8 )) && printf '\n'
   done
+  (( i % 8 )) && printf '\n'
+  unset i
 }
-alias color_demo_8_bit='__color_demo 8'
 alias color_demo_256_bit='__color_demo 256'
 
 color_ansi_demo() {
@@ -345,7 +347,7 @@ color_ansi_demo() {
       IFS=: read -r FG_CODE FG_NAME <<< "$FG"
       printf "  FG %3s %-14s" "$FG_CODE" "$FG_NAME"
       for BG in "${BGS[@]}"; do
-        IFS=: read -r BG_CODE <<< "$BG"
+        IFS=: read -r BG_CODE _ <<< "$BG"
         printf "\e[%s;%s;%sm %s \e[0m" "$STYLE_CODE" "$FG_CODE" "$BG_CODE" "asdf"
       done
       printf "\e[0m\n"
@@ -373,48 +375,85 @@ color_helper() {
 # Timer: Start, Stop, Duration
 # Usage:
 #  timer-start          # Start timer
-#  timer-duration       # Get duration in seconds
-#  timer-duration 8601  # Get duration in iso-8601-like format
-#  timer-stop           # Stop timer and get duration in seconds
-#  timer-stop 8601      # Stop timer and get duration in
-#                          iso-8601-like format
+#  timer-duration       # Get duration in milliseconds (4 decimals)
+#  timer-duration ns    # Get duration in nanoseconds
+#  timer-duration us    # Get duration in microseconds (3 decimals)
+#  timer-duration ms    # Get duration in milliseconds (4 decimals)
+#  timer-duration s     # Get duration in seconds (9 decimals)
+#  timer-duration 8601  # Get duration in hh:mm:ss.ffff format
+#  timer-stop           # Stop timer and get duration in milliseconds (4 decimals)
+#  timer-stop <mode>    # Modes: ns, us, ms, s, 8601
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 timer-handler() {
-  if [[ -n $timer_start ]]; then
-    timer_now_s=$SECONDS
-    timer_duration_s=$(( timer_now_s - timer_start ))
+  local mode timer_now_ns timer_duration_s timer_duration_rem_ns
+  local timer_duration_us timer_duration_ms
+  local days hours minutes seconds
+  mode="${1:-ms}"
+
+  if [[ -n ${timer_start_ns+x} ]]; then
+    timer_now_ns=$(date +'%s%N')
+    timer_duration_ns=$(( timer_now_ns - timer_start_ns ))
   else
     echo "timer not started"
     return 1
   fi
-  timer_output="$timer_duration_s"
-  # days:hours:minutes:seconds
-  if [[ "$1" == "8601" ]]; then
-    [[ $(( timer_duration_s/3600/24 )) -eq 0 ]] && timer_output=$(date --utc -d "@$timer_duration_s" +"%H:%M:%S")
-    [[ $(( timer_duration_s/3600/24 )) -gt 0 ]] && timer_output=$(date --utc -d "@$timer_duration_s" +"$(( timer_duration_s/3600/24 )):%H:%M:%S")
-  fi
+
+  timer_duration_s=$(( timer_duration_ns / 1000000000 ))
+  timer_duration_rem_ns=$(( timer_duration_ns % 1000000000 ))
+  timer_duration_us=$(( timer_duration_ns / 1000 ))
+  timer_duration_ms=$(( timer_duration_ns / 1000000 ))
+
+  case "$mode" in
+    ns)
+      timer_output="$timer_duration_ns"
+      ;;
+    us)
+      printf -v timer_output '%d.%03d' "$timer_duration_us" $(( (timer_duration_ns % 1000) ))
+      ;;
+    ms)
+      printf -v timer_output '%d.%04d' "$timer_duration_ms" $(( (timer_duration_ns % 1000000) / 100 ))
+      ;;
+    s)
+      printf -v timer_output '%d.%09d' "$timer_duration_s" "$timer_duration_rem_ns"
+      ;;
+    8601)
+      days=$(( timer_duration_s / 86400 ))
+      hours=$(( (timer_duration_s % 86400) / 3600 ))
+      minutes=$(( (timer_duration_s % 3600) / 60 ))
+      seconds=$(( timer_duration_s % 60 ))
+      if (( days > 0 )); then
+        printf -v timer_output '%d:%02d:%02d:%02d.%04d' "$days" "$hours" "$minutes" "$seconds" $(( timer_duration_rem_ns / 100000 ))
+      else
+        printf -v timer_output '%02d:%02d:%02d.%04d' "$hours" "$minutes" "$seconds" $(( timer_duration_rem_ns / 100000 ))
+      fi
+      ;;
+    *)
+      loggerx ERROR "Mode must be one of: ns, us, ms, s, 8601"
+      return 1
+      ;;
+  esac
 }
 
 timer-start() {
-  if [[ -n ${timer_start+x} ]]; then
+  if [[ -n ${timer_start_ns+x} ]]; then
     loggerx ERROR "Timer already started."
     return 1
   fi
-  timer_start=$SECONDS
+  timer_start_ns=$(date +'%s%N')
 }
 
 timer-duration() {
-  timer-handler "$1"
+  timer-handler "$1" || return 1
   echo "$timer_output"
 }
 
 timer-stop() {
   if [[ "$1" == "-h" ]]; then
-    echo "Returns duration in seconds. Specify '8601' for an iso-8601-like output."
+    echo "Returns duration in milliseconds (4 decimals) by default. Modes: ns, us, ms, s, 8601."
     return 1
   fi
   timer-duration "$1"
-  unset timer_start
+  unset timer_start_ns
 }
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -512,7 +551,11 @@ alias less='less -R'                                        # Colorize less
 command -v eza >/dev/null 2>&1 && alias ls='eza --icons --group-directories-first'
 alias l1='ls -1'
 alias watch='watch --color'                                 # Colorize watch
-alias ls='eza --icons --group-directories-first'            # Use eza. Deprecates lsd with -d & -D.
+alias ls='eza                             \
+            --icons                       \
+            --group                       \
+            --group-directories-first     \
+            --time-style '+%FT%TZ''            # Show long ISO time format
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Clipboard helpers
