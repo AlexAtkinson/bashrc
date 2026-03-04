@@ -381,7 +381,7 @@ color_helper() {
 #  timer-duration ms    # Get duration in milliseconds (4 decimals)
 #  timer-duration s     # Get duration in seconds (9 decimals)
 #  timer-duration 8601  # Get duration in hh:mm:ss.ffff format
-#  timer-stop           # Stop timer and get duration in milliseconds (4 decimals)
+#  timer-stop           # Stop timer and get duration in milliseconds (integer)
 #  timer-stop <mode>    # Modes: ns, us, ms, s, 8601
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 timer-handler() {
@@ -448,11 +448,22 @@ timer-duration() {
 }
 
 timer-stop() {
+  local mode
+  mode="${1:-ms}"
+
   if [[ "$1" == "-h" ]]; then
-    echo "Returns duration in milliseconds (4 decimals) by default. Modes: ns, us, ms, s, 8601."
+    echo "Returns duration in milliseconds (integer) by default. Numeric modes include units. Modes: ns, us, ms, s, 8601."
     return 1
   fi
-  timer-duration "$1"
+
+  timer-handler "$mode" || return 1
+  case "$mode" in
+    ns)   echo "${timer_output} ns" ;;
+    us)   echo "${timer_output} us" ;;
+    ms)   [[ -z "$1" ]] && echo "${timer_output%%.*} ms" || echo "${timer_output} ms" ;;
+    s)    echo "${timer_output} s" ;;
+    8601) echo "$timer_output" ;;
+  esac
   unset timer_start_ns
 }
 
