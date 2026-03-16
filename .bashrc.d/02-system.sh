@@ -27,7 +27,31 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Misc : System
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-alias __system_update='source <(curl -s https://gist.githubusercontent.com/AlexAtkinson/27b12f4dfda31b1b74fcab3fc9a6d192/raw/init.sh)'
+#alias __system_update='source <(curl -s https://gist.githubusercontent.com/AlexAtkinson/27b12f4dfda31b1b74fcab3fc9a6d192/raw/init.sh)'
+function __system_update() {
+  local GIT_DIR TASK OWD
+  OWD=$(pwd)
+  TASK="Update system setup from workstation_setup repository"; et
+  GIT_DIR="$HOME/git/$USER/"
+  if [[ ! -d "$GIT_DIR" ]]; then
+    TASK="Create directory $GIT_DIR"
+    mkdir -p "$GIT_DIR"; rc 0
+  fi
+  cd "$GIT_DIR" || { echo "Failed to change directory to $GIT_DIR"; exit 1; }
+  if  [[ ! -d "$GIT_DIR/workstation_setup" ]]; then
+    TASK="Clone workstation_setup repository"; et
+    git clone git@github.com:AlexAtkinson/workstation_setup.git; rc 0
+  fi
+  TASK="Change directory to workstation_setup and run setup.sh"
+  # shellcheck disable=SC2164
+  cd workstation_setup; rc 0
+  git pull; rc 0
+  ./setup.sh
+  TASK="Return to $OWD"
+  # shellcheck disable=SC2164
+  cd "$OWD"; rc 0
+}
+
 alias __update_system='__system_update'                                            # Alias for __system_update
 alias __sysctl_update='sudo sysctl --system'                                       # Apply _all_ sysctl config changes
 alias __reload_daemons='sudo systemctl daemon-reload'                              # Reload systemd manager configuration
