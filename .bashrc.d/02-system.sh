@@ -25,20 +25,22 @@
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Misc : System
+# System Update
+# Dependencies:
+#  - git
+#  - GIT_USERDIR (assured by 00-init.sh)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #alias __system_update='source <(curl -s https://gist.githubusercontent.com/AlexAtkinson/27b12f4dfda31b1b74fcab3fc9a6d192/raw/init.sh)'
 function __system_update() {
-  local GIT_DIR TASK OWD
+  local TASK OWD
   OWD=$(pwd)
   TASK="Update system setup from workstation_setup repository"; et
-  GIT_DIR="$HOME/git/$USER/"
-  if [[ ! -d "$GIT_DIR" ]]; then
-    TASK="Create directory $GIT_DIR"
-    mkdir -p "$GIT_DIR"; rc 0
+  if [[ ! -d "$GIT_USERDIR" ]]; then
+    TASK="Create directory $GIT_USERDIR"
+    mkdir -p "$GIT_USERDIR"; rc 0
   fi
-  cd "$GIT_DIR" || { echo "Failed to change directory to $GIT_DIR"; exit 1; }
-  if  [[ ! -d "$GIT_DIR/workstation_setup" ]]; then
+  cd "$GIT_USERDIR" || { echo "Failed to change directory to $GIT_USERDIR"; exit 1; }
+  if  [[ ! -d "$GIT_USERDIR/workstation_setup" ]]; then
     TASK="Clone workstation_setup repository"; et
     git clone git@github.com:AlexAtkinson/workstation_setup.git; rc 0
   fi

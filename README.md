@@ -53,10 +53,13 @@ if [ -d ~/.bashrc.d/ ]; then
 fi
 ```
 
-This is best implemented as-code with your system-maintenance tooling.<br>
-IE: [Setup User bashrc](https://gist.github.com/AlexAtkinson/27b12f4dfda31b1b74fcab3fc9a6d192#file-setup-sh-L293)
+> [!NOTE]
+> This is best implemented as-code with your system-maintenance tooling.
 
-`00-user-context.sh` & `90-99-*.sh` are specifically reserved for manually maintained user configs, but any level may be used. Including the string '_oob_' (out-of-band) will fully mitigate potential of namespace collisions.
+### File Name Convention
+
+All files from this repo are prefixed with a runlevel which dictates loading sequence.<br>
+Out of band user config filenames should include '_oob_' (out-of-band), or use CAPS to mitigate potential namespace collisions.
 
 Configurations which are only necessary on occasion may be implemented within the `bashrc.d/on-demand` directory, with a loader being added to `01-on-demand.sh`.
 

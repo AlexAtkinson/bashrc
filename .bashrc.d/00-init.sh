@@ -41,7 +41,7 @@
 # Cyclomatic Complexity: 7
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 __check_bashrc_update() {
-  local CADENCE_FILE LOCAL_VERSION LOCAL_FILE REMOTE_VERSION REMOTE_FILE_URL CACHED_RESULT_FILE
+  local CADENCE_FILE LOCAL_VERSION LOCAL_FILE REMOTE_VERSION REMOTE_FILE_URL CACHED_RESULT_FILE PADDING
   LOCAL_FILE="$HOME/.bashrc.yaml"
   # TODO: move to user_context.sh
   REMOTE_FILE_URL="https://raw.githubusercontent.com/AlexAtkinson/bashrc/refs/heads/main/.bashrc.yaml"
@@ -53,6 +53,7 @@ __check_bashrc_update() {
   # Exit if within cadence period and cached result was false
   [[ $(( $(date +%s) - $(stat "$CADENCE_FILE" -c %Y) )) -le 10 ]] && [[ ! -s "$CACHED_RESULT_FILE" ]] && return 0
   if [[ $(( $(date +%s) - $(stat "$CADENCE_FILE" -c %Y) )) -le 10 ]] && [[ -s "$CACHED_RESULT_FILE" ]]; then
+    PADDING=$(printf '%*s' ${#FUNCNAME[*]} '')
     loggerx ERROR "${FUNCNAME[*]}: Rate limit exceeded. Using cached result.
                    Limit resets in: $(( 10 - ($(date +%s) - $(stat "$CADENCE_FILE" -c %Y)) )) seconds."
     cat "$CACHED_RESULT_FILE"
@@ -212,12 +213,41 @@ __permissions_checks() {
 __permissions_checks
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# bashrc.d VARS initialization
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# Ensure bashrc.d/00-VARS.sh exists
+[[ ! -f "$HOME/.bashrc.d/00-VARS.sh" ]] && touch "$HOME/.bashrc.d/00-VARS.sh"
+# shellcheck source=/dev/null
+source "$HOME/.bashrc.d/00-VARS.sh"
+
+if [[ -z ${GIT_USERNAME+x} ]]; then
+  loggerx NOTICE "Variable 'GIT_USERNAME' not found. Adding it to 00-VARS.sh."
+  read -rp "Press [ENTER] to use '$USER', or enter a new value: " GIT_USERNAME
+  # If GIT_USERNAME is blank, use USER
+  [[ -z "$GIT_USERNAME" ]] && GIT_USERNAME="$USER"
+  echo "export GIT_USERNAME='$GIT_USERNAME'" >> "$HOME/.bashrc.d/00-VARS.sh"
+  export GIT_USERNAME="$GIT_USERNAME"
+fi
+
+# Don't clobber GIT_DIR
+if [[ -z ${GIT_USERDIR+x} ]]; then
+  loggerx NOTICE "Variable 'GIT_USERDIR' not found. Adding it to 00-VARS.sh."
+  read -rp "Press [ENTER] to use '$HOME/git/$GIT_USERNAME', or enter a new value: " GIT_USERDIR
+  # If GIT_USERDIR is blank, use default
+  [[ -z "$GIT_USERDIR" ]] && GIT_USERDIR="$HOME/git/$GIT_USERNAME"
+  echo "export GIT_USERDIR='$GIT_USERDIR'" >> "$HOME/.bashrc.d/00-VARS.sh"
+  export GIT_USERDIR="$GIT_USERDIR"
+fi
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Directory Assurance
 # - Ensures required directories exist.
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 __directory_assurance() {
   local DIRS=(
     "$HOME/.iptables"
+    "$GIT_USERDIR"
   )
   for DIR in "${DIRS[@]}"; do
     [[ ! -d "$DIR" ]] && mkdir -p "$DIR"
@@ -232,58 +262,3 @@ export SYSTEMD_EDITOR=vim                         # Change default systemctl edi
 export EDITOR=vim                                 # Change editor to VIM
 alias sudo='sudo '                                # Preserve aliases with sudo
 alias visudo='sudo EDITOR=vim visudo'             # Change visudo editor to VIM
-
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# REGEX
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-export REGEX_INTEGER='^[0-9]+$'
-export REGEX_FLOAT='^[0-9]+\.[0-9]+$'
-export REGEX_SEMVER="[v]?(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)"
-export REGEX_URL='(https?:\/\/)?(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)'
-export REGEX_IP='((^\s*((([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5]))\s*$)|(^\s*((([0-9A-Fa-f]{1,4}:){7}([0-9A-Fa-f]{1,4}|:))|(([0-9A-Fa-f]{1,4}:){6}(:[0-9A-Fa-f]{1,4}|((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){5}(((:[0-9A-Fa-f]{1,4}){1,2})|:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){4}(((:[0-9A-Fa-f]{1,4}){1,3})|((:[0-9A-Fa-f]{1,4})?:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){3}(((:[0-9A-Fa-f]{1,4}){1,4})|((:[0-9A-Fa-f]{1,4}){0,2}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){2}(((:[0-9A-Fa-f]{1,4}){1,5})|((:[0-9A-Fa-f]{1,4}){0,3}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){1}(((:[0-9A-Fa-f]{1,4}){1,6})|((:[0-9A-Fa-f]{1,4}){0,4}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(:(((:[0-9A-Fa-f]{1,4}){1,7})|((:[0-9A-Fa-f]{1,4}){0,5}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:)))(%.+)?\s*$))'
-export REGEX_IPV4='(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])'
-export REGEX_IPV6='(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))'
-export REGEX_IPV4_IPV6='((^\s*((([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5]))\s*$)|(^\s*((([0-9A-Fa-f]{1,4}:){7}([0-9A-Fa-f]{1,4}|:))|(([0-9A-Fa-f]{1,4}:){6}(:[0-9A-Fa-f]{1,4}|((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){5}(((:[0-9A-Fa-f]{1,4}){1,2})|:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){4}(((:[0-9A-Fa-f]{1,4}){1,3})|((:[0-9A-Fa-f]{1,4})?:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){3}(((:[0-9A-Fa-f]{1,4}){1,4})|((:[0-9A-Fa-f]{1,4}){0,2}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){2}(((:[0-9A-Fa-f]{1,4}){1,5})|((:[0-9A-Fa-f]{1,4}){0,3}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){1}(((:[0-9A-Fa-f]{1,4}){1,6})|((:[0-9A-Fa-f]{1,4}){0,4}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(:(((:[0-9A-Fa-f]{1,4}){1,7})|((:[0-9A-Fa-f]{1,4}){0,5}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:)))(%.+)?\s*$))'
-export REGEX_IP_PRIVATE='10(?:\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)){3}|172\.(?:1[6-9]|2[0-9]|3[01])(?:\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)){2}|192\.168(?:\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)){2}|127(?:\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)){3}|169\.254(?:\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)){2}'
-export REGEX_IPV4_PRIVATE='(10|127|169\.254|172\.1[6-9]|172\.2[0-9]|172\.3[0-1]|192\.168)\.'
-export REGEX_IPv6_PRIVATE='(^::1$)|(^[fF][cCdD])'
-export REGEX_EMAIL='[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}'
-export REGEX_DUPES='(\b\w+\b)(?=.*\b\1\b)'
-export REGEX_HEX_COLOR='#?([a-fA-F0-9]{6}|[a-fA-F0-9]{3})\b'
-export REGEX_DATE_ISO8601='([0-9]{4})-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])'
-export REGEX_TIME_24H='([01][0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9])?'
-export REGEX_UUID='[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}'
-export REGEX_MAC_ADDRESS='([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})'
-export REGEX_US_PHONE='\(?\b[2-9][0-9]{2}\)?[-.\s]?[2-9][0-9]{2}[-.\s]?[0-9]{4}\b'
-export REGEX_CREDIT_CARD='\b(?:4[0-9]{12}(?:[0-9]{3})?|5[1-5][0-9]{14}|3[47][0-9]{13}|3(?:0[0-5]|[68][0-9])[0-9]{11}|6(?:011|5[0-9]{2})[0-9]{12}|(?:2131|1800|35\d{3})\d{11})\b'
-export REGEX_POSTAL_CODE_US='\b\d{5}(-\d{4})?\b'
-export REGEX_POSTAL_CODE_CA='\b[ABCEGHJ-NPRSTVXY]\d[ABCEGHJ-NPRSTV-Z] ?\d[ABCEGHJ-NPRSTV-Z]\d\b'
-export REGEX_POSTAL_CODE_UK='\b([A-Z]{1,2}\d[A-Z\d]? \d[ABD-HJLNP-UW-Z]{2}|GIR 0AA)\b'
-export REGEX_HTML_TAG='<([a-zA-Z][a-zA-Z0-9]*)\b[^>]*>(.*?)<\/\1>'
-export REGEX_WHITESPACE='^[[:space:]]+$'
-export REGEX_PASSWORD_STRONG='^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$'
-export REGEX_BASE64='^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$'
-export REGEX_BINARY='^[01]+$'
-export REGEX_HEX='^0x[0-9a-fA-F]+$'
-export REGEX_OCTAL='^0[0-7]+$'
-export REGEX_NUMERIC='^-?[0-9]+(\.[0-9]+)?$'
-export REGEX_ALPHANUMERIC='^[a-zA-Z0-9]+$'
-export REGEX_UUID_V4='[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}'
-export REGEX_YOUTUBE_URL='^(https?\:\/\/)?(www\.youtube\.com|youtu\.be)\/.+$'
-export REGEX_TWITTER_HANDLE='^@?(\w){1,15}$'
-export REGEX_GITHUB_USERNAME='^(?!-)(?!.*--)[a-zA-Z0-9-]{1,39}(?<!-)$'
-export REGEX_HTML_ENTITY='&[a-zA-Z]+;|&#[0-9]+;|&#x[0-9a-fA-F]+;'
-export REGEX_UNIX_PATH='^(\/[^\/\0]+)+\/?$'
-export REGEX_WINDOWS_PATH='^[a-zA-Z]:\\(?:[^\\\/\:\*\?"<>\|]+\\)*[^\\\/\:\*\?"<>\|]*$'
-export REGEX_ISBN_10='^(?:\d{9}X|\d{10})$'
-export REGEX_ISBN_13='^(?:\d{13})$'
-export REGEX_LATITUDE='^(-?([1-8]?[0-9](\.\d+)?|90(\.0+)?))$'
-export REGEX_LONGITUDE='^(-?((1[0-7][0-9](\.\d+)?|[1-9]?[0-9](\.\d+)?|180(\.0+)?)))$'
-export REGEX_COORDINATES='^(-?([1-8]?[0-9](\.\d+)?|90(\.0+)?)),\s*(-?((1[0-7][0-9](\.\d+)?|[1-9]?[0-9](\.\d+)?|180(\.0+)?)))$'
-export REGEX_HTML_COMMENT='<!--(.*?)-->'
-export REGEX_CSS_CLASS='\.([a-zA-Z_-][a-zA-Z0-9_-]*)\s*\{'
-export REGEX_CSS_ID='#([a-zA-Z_-][a-zA-Z0-9_-]*)\s*\{'
-export REGEX_XML_TAG='<([a-zA-Z_][\w\.-]*)(\s+[a-zA-Z_][\w\.-]*="[^"]*")*\s*(\/?)>'
-export REGEX_YAML_KEY='^([a-zA-Z0-9_-]+):'
-export REGEX_JSON_KEY='"([a-zA-Z0-9_-]+)"\s*:'
-export REGEX_MARKDOWN_HEADER='^(#{1,6})\s+(.+)$'
