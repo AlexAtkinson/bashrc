@@ -97,11 +97,11 @@ HISTTIMEFORMAT="%FT%T "
 HISTFILESIZE=20480
 HISTSIZE=2048
 
-# Load all previous history files
-# TODO: Optimize to avoid loading huge histories repeatedly.
-for HISTFILE in ~/.history/history.*.hist; do
-  history -r "$HISTFILE"
-done
+# Load 30 history files from last 30 days
+while read -r histfile; do
+  history -r "$histfile"
+done <<< "$(find ~/.history/ -type f -name "*.hist" -mtime -30)"
+
 grep -q 'history -a' <<< "$PROMPT_COMMAND" || export PROMPT_COMMAND="history -a; $PROMPT_COMMAND"
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
