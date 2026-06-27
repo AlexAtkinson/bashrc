@@ -1,5 +1,9 @@
 {
-  "cSpell.words": [
+  "version": "0.2",
+  "ignorePaths": [],
+  "dictionaryDefinitions": [],
+  "dictionaries": [],
+  "words": [
     "ABCEGHJ",
     "DIRTRIM",
     "Favs",
@@ -66,10 +70,6 @@
     "xclip",
     "youtu"
   ],
-  "files.exclude": {
-    "**/.git": false
-  },
-  "search.exclude": {
-    "**/.git": true
-  }
+  "ignoreWords": [],
+  "import": []
 }

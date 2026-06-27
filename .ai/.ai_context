@@ -1,0 +1,28 @@
+# .ai_context
+
+## Session Record (append-only)
+- timestamp_utc: 2026-02-24
+- primer_source: https://gist.githubusercontent.com/AlexAtkinson/0967496361367d0279d1b70843e7b0e3/raw/AI_Prompt_Primers.md
+- primer_etag: "5dd037ed3a617b3a6e7d7bacb982aa0767ffa349a43765bb6767c6cef4972d6e"
+- primer_check_cadence: "session start + hourly"
+
+## Scope
+- Assess repository state and produce prioritized TODOs.
+- Align `.ai` artifacts to primer guidance with minimal necessary files.
+
+## Project Snapshot
+- repo: bashrc
+- modules_path: .bashrc.d/
+- ci_path_present: false (`.github/` not found)
+- linting_signal: shellcheck reports findings in init/system/utility/security modules.
+
+## Compliance Notes
+- `.ai_history` not created (no architectural decision recorded in this pass).
+- `.ai_audit` not created (no protected/sensitive or proprietary payload boundary crossing).
+
+## Prioritized TODO Seed
+1. Add CI with shellcheck + SAST baseline and fail-on-error gates.
+2. Fix shellcheck warnings in `.bashrc.d/00-init.sh`, `.bashrc.d/02-system.sh`, `.bashrc.d/31-security.sh`.
+3. Resolve deprecated module drift and archive/retire `.bashrc.d/00-init.deprecated` safely.
+4. Add lightweight test harness for critical functions (`loggerx`, `rc`, permission checks).
+5. Tighten module metadata consistency (descriptions, ownership, and loader docs).

@@ -1285,7 +1285,7 @@ bytesTo() {
 function overlay-weather-for-htop() {
   if [[ ! $(jobs | grep run-htop-weather) ]]; then
     sleep 0.25
-    while [[ $(ps ax | grep -v grep | grep " htop\|$(whereis htop | awk '{print $2}')" | wc -l) > 0 ]]; do
+    while [[ $(ps ax | grep -v grep | grep " htop\|$(whereis htop | awk '{print $2}')" | wc -l) -gt 0 ]]; do
       _TAG="run-htop-weather"
       while read -r pts; do
         _TAG="run-htop-weather"
@@ -1329,3 +1329,57 @@ function htopw() {
 }
 
 alias htop='htopw'                                                                 # htop with the weather overlay
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Sync spelling words between .vscode/settings.json (cSpell.words)
+# and a CSpell config (cspell.json, .cspell.json, cspell.config.json).
+# Merges both word lists, deduplicates, and writes back to each file found.
+# Run from the project root.
+# Dependencies:
+#   - jq
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+__vscode_spelling_sync() {
+    local vscode_settings=".vscode/settings.json"
+    local cspell_config="" tmp words_json
+    local vscode_words=() cspell_words=() merged=()
+
+    for f in "cspell.json" ".cspell.json" "cspell.config.json"; do
+        [[ -f "$f" ]] && { cspell_config="$f"; break; }
+    done
+
+    if [[ ! -f "$vscode_settings" && -z "$cspell_config" ]]; then
+        echo "ERROR: No .vscode/settings.json or CSpell config found in $(pwd)" >&2
+        return 1
+    fi
+
+    [[ -f "$vscode_settings" ]] && \
+        mapfile -t vscode_words < <(jq -r '.["cSpell.words"][]? // empty' "$vscode_settings" 2>/dev/null)
+
+    [[ -n "$cspell_config" ]] && \
+        mapfile -t cspell_words < <(jq -r '.words[]? // empty' "$cspell_config" 2>/dev/null)
+
+    mapfile -t merged < <(printf '%s\n' "${vscode_words[@]}" "${cspell_words[@]}" | sort -u)
+
+    if [[ ${#merged[@]} -eq 0 ]]; then
+        echo "No spelling words found in either config." >&2
+        return 0
+    fi
+
+    words_json=$(printf '%s\n' "${merged[@]}" | jq -R . | jq -s .)
+
+    if [[ -f "$vscode_settings" ]]; then
+        tmp=$(mktemp)
+        jq --argjson w "$words_json" '.["cSpell.words"] = $w' "$vscode_settings" > "$tmp" \
+            && mv "$tmp" "$vscode_settings" \
+            && echo "Updated $vscode_settings (${#merged[@]} words)"
+    fi
+
+    if [[ -n "$cspell_config" ]]; then
+        tmp=$(mktemp)
+        jq --argjson w "$words_json" '.words = $w' "$cspell_config" > "$tmp" \
+            && mv "$tmp" "$cspell_config" \
+            && echo "Updated $cspell_config (${#merged[@]} words)"
+    fi
+}
+
+alias vscode-spell-sync='__vscode_spelling_sync'
