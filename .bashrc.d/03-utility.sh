@@ -1245,3 +1245,87 @@ bytesTo() {
     done
     echo "$i$d ${S[$s]}"
 }
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# HTOP Weather Overlay
+# Renders a wttr.in weather "overlay" into an empty space in
+# the htop meters layout. The 'htop' alias launches htop with
+# the overlay running in the background.
+# Dependencies:
+#  - htop
+#  - curl
+#  - tput (ncurses)
+#  - WEATHER_LOCALE (assured by 00-init.sh, defaults to Toronto)
+# Notes:
+#  - Refreshes the overlay every ~2s, but only pulls from
+#    wttr.in every 300s (5m).
+#  - Use 'kill-htop-weather' to break the while loop if needed.
+#  - Requires an empty space in the htop meters setup.
+#    Recommended Meters layout (F2):
+#      Column 1                Column 2
+#      ----------------------------------------------
+#      Date and Time [LED]     CPUs (1-8/16) [Graph]
+#      Blank [Text]            CPUs (9-16/16) [Graph]
+#      Blank [Text]            Blank [Text]
+#      Blank [Text]            Memory & Swap [Bar]
+#      Blank [Text]            Disk IO [Graph]
+#      Blank [Text]            Network IO [Graph]
+#      Blank [Text]
+#      Hostname [Text]
+#      Uptime [Text]
+#      Blank [Text]
+#      System [Text]
+#      SELinux [Text]
+#      Systemd state [Text]
+#      Task counter [Text]
+#      Load average [Text]
+# Debug (run in another term):
+#  watch 'echo "AGE:$(( $(date +"%s") - $(stat -c%Y ~/.htopweather) ))"; cat ~/.htopweather'
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+function overlay-weather-for-htop() {
+  if [[ ! $(jobs | grep run-htop-weather) ]]; then
+    sleep 0.25
+    while [[ $(ps ax | grep -v grep | grep " htop\|$(whereis htop | awk '{print $2}')" | wc -l) > 0 ]]; do
+      _TAG="run-htop-weather"
+      while read -r pts; do
+        _TAG="run-htop-weather"
+        weatherFile="$HOME/.htopweather"
+        maxAge=300
+        locale="${WEATHER_LOCALE:-Toronto}"
+        [[ ! -f $weatherFile ]] && (curl -s "wttr.in/${locale}?0pQ" | head -n -1 > $weatherFile)
+        [[ $(( $(date +"%s") - $(stat -c%Y $weatherFile) )) -gt $maxAge ]] && (curl -s "wttr.in/${locale}?0pQ" | head -n -1 > $weatherFile)
+        (
+          row=4
+          tput sc
+          tput cup $row 0
+          while IFS= read -r line; do
+            printf "$line"
+            tput cup $((row+++1)) 0
+          done<<<$(cat $weatherFile)
+          tput rc
+          tput cnorm
+        ) <>/dev/$pts >&0 2>&1
+      # Worked in Fedora # done<<<$(ps ax | grep -v grep | grep " htop\|$(whereis htop | awk '{print $2}')" | awk '{print $2}')
+      # The following works in Pop!_OS/Ubuntu
+      done<<<$(ps aux | grep -v grep | grep $USER | grep " htop\|$(whereis htop | awk '{print $2}')" | awk '{print $7}')
+      sleep 2
+    done
+    sleep 2.1
+  fi
+}
+
+function run-htop-weather() {
+  _TAG="run-htop-weather" overlay-weather-for-htop &
+}
+
+# To kill the htop weather proc: kill the ppid of its sleep loop.
+function kill-htop-weather() {
+  kill -9 $(ps -o ppid= -p$(grep -l "\b_TAG=run-htop-weather\b" /proc/*/environ | awk -F/ '{print $3}'))
+}
+
+function htopw() {
+  [[ $(grep -l "\b_TAG=run-htop-weather\b" /proc/*/environ | wc -l) == 0 ]] && run-htop-weather &
+  /usr/bin/htop $*
+}
+
+alias htop='htopw'                                                                 # htop with the weather overlay

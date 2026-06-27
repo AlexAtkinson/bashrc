@@ -240,6 +240,16 @@ if [[ -z ${GIT_USERDIR+x} ]]; then
   export GIT_USERDIR="$GIT_USERDIR"
 fi
 
+# Location for the htop weather overlay (see 03-utility.sh)
+if [[ -z ${WEATHER_LOCALE+x} ]]; then
+  loggerx NOTICE "Variable 'WEATHER_LOCALE' not found. Adding it to 00-VARS.sh."
+  read -rp "Press [ENTER] to use 'Toronto', or enter a new value: " WEATHER_LOCALE
+  # If WEATHER_LOCALE is blank, use default
+  [[ -z "$WEATHER_LOCALE" ]] && WEATHER_LOCALE="Toronto"
+  echo "export WEATHER_LOCALE='$WEATHER_LOCALE'" >> "$HOME/.bashrc.d/00-VARS.sh"
+  export WEATHER_LOCALE="$WEATHER_LOCALE"
+fi
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Directory Assurance
 # - Ensures required directories exist.
