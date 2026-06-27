@@ -105,7 +105,7 @@ __restore_browser_bookmarks() {
         local profile
         profile=$(find "$profile_root" -mindepth 1 -maxdepth 1 -type d \
             \( -name "*.default" -o -name "*.default-*" -o -name "*.default-release" \) \
-            | xargs -I{} stat --format="%Y {}" {} 2>/dev/null \
+            -exec stat --format="%Y %n" {} \; 2>/dev/null \
             | sort -rn | head -1 | awk '{print $2}')
 
         if [[ -z "$profile" || ! -d "$profile" ]]; then

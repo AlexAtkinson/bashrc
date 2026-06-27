@@ -102,7 +102,7 @@ jwt_create_token() {
     printf '%s\n' '   EG: jwt_create 8600 user_id the_king'
     printf '%s\n' "Supply 'SIGN' as the fourth argument to add a signature"
   }
-  if [[ $key == '-h' ]] || [[ $# -eq 0 ]] || [[ $# -lt 3 ]]; then
+  if [[ $1 == '-h' ]] || [[ $# -eq 0 ]] || [[ $# -lt 3 ]]; then
     help
     return
   fi

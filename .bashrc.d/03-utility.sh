@@ -408,7 +408,7 @@ timer-handler() {
       timer_output="$timer_duration_ns"
       ;;
     us)
-      printf -v timer_output '%d.%03d' "$timer_duration_us" $(( (timer_duration_ns % 1000) ))
+      printf -v timer_output '%d.%03d' "$timer_duration_us" $(( timer_duration_ns % 1000 ))
       ;;
     ms)
       printf -v timer_output '%d.%04d' "$timer_duration_ms" $(( (timer_duration_ns % 1000000) / 100 ))
@@ -670,6 +670,7 @@ update-ffmpeg() {
       echo "$LATEST_VERSION" | sudo tee "${dir}/ffmpeg.version" > /dev/null; rc 0
     done
     cd - >/dev/null 2>&1 || true
+    # shellcheck disable=SC2034
     TASK="Update ffmpeg from $LOCAL_VERSION to $LATEST_VERSION"; rc 0
 }
 
@@ -1283,31 +1284,32 @@ bytesTo() {
 #  watch 'echo "AGE:$(( $(date +"%s") - $(stat -c%Y ~/.htopweather) ))"; cat ~/.htopweather'
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function overlay-weather-for-htop() {
-  if [[ ! $(jobs | grep run-htop-weather) ]]; then
+  if ! jobs | grep -q run-htop-weather; then
     sleep 0.25
-    while [[ $(ps ax | grep -v grep | grep " htop\|$(whereis htop | awk '{print $2}')" | wc -l) -gt 0 ]]; do
+    while pgrep -x htop > /dev/null; do
       _TAG="run-htop-weather"
+      # shellcheck disable=SC2009
       while read -r pts; do
         _TAG="run-htop-weather"
         weatherFile="$HOME/.htopweather"
         maxAge=300
         locale="${WEATHER_LOCALE:-Toronto}"
-        [[ ! -f $weatherFile ]] && (curl -s "wttr.in/${locale}?0pQ" | head -n -1 > $weatherFile)
-        [[ $(( $(date +"%s") - $(stat -c%Y $weatherFile) )) -gt $maxAge ]] && (curl -s "wttr.in/${locale}?0pQ" | head -n -1 > $weatherFile)
+        [[ ! -f $weatherFile ]] && (curl -s "wttr.in/${locale}?0pQ" | head -n -1 > "$weatherFile")
+        [[ $(( $(date +"%s") - $(stat -c%Y "$weatherFile") )) -gt $maxAge ]] && (curl -s "wttr.in/${locale}?0pQ" | head -n -1 > "$weatherFile")
         (
           row=4
           tput sc
           tput cup $row 0
           while IFS= read -r line; do
-            printf "$line"
+            printf '%s' "$line"
             tput cup $((row+++1)) 0
-          done<<<$(cat $weatherFile)
+          done < "$weatherFile"
           tput rc
           tput cnorm
-        ) <>/dev/$pts >&0 2>&1
+        ) <>/dev/"$pts" >&0 2>&1
       # Worked in Fedora # done<<<$(ps ax | grep -v grep | grep " htop\|$(whereis htop | awk '{print $2}')" | awk '{print $2}')
       # The following works in Pop!_OS/Ubuntu
-      done<<<$(ps aux | grep -v grep | grep $USER | grep " htop\|$(whereis htop | awk '{print $2}')" | awk '{print $7}')
+      done <<< "$(ps aux | grep -v grep | grep "$USER" | grep " htop\|$(whereis htop | awk '{print $2}')" | awk '{print $7}')"
       sleep 2
     done
     sleep 2.1
@@ -1320,12 +1322,13 @@ function run-htop-weather() {
 
 # To kill the htop weather proc: kill the ppid of its sleep loop.
 function kill-htop-weather() {
+  # shellcheck disable=SC2046
   kill -9 $(ps -o ppid= -p$(grep -l "\b_TAG=run-htop-weather\b" /proc/*/environ | awk -F/ '{print $3}'))
 }
 
 function htopw() {
   [[ $(grep -l "\b_TAG=run-htop-weather\b" /proc/*/environ | wc -l) == 0 ]] && run-htop-weather &
-  /usr/bin/htop $*
+  /usr/bin/htop "$@"
 }
 
 alias htop='htopw'                                                                 # htop with the weather overlay

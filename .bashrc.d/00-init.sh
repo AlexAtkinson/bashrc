@@ -41,9 +41,8 @@
 # Cyclomatic Complexity: 7
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 __check_bashrc_update() {
-  local CADENCE_FILE LOCAL_VERSION LOCAL_FILE REMOTE_VERSION REMOTE_FILE_URL CACHED_RESULT_FILE PADDING
+  local CADENCE_FILE LOCAL_VERSION LOCAL_FILE REMOTE_VERSION REMOTE_FILE_URL CACHED_RESULT_FILE
   LOCAL_FILE="$HOME/.bashrc.yaml"
-  # TODO: move to user_context.sh
   REMOTE_FILE_URL="https://raw.githubusercontent.com/AlexAtkinson/bashrc/refs/heads/main/.bashrc.yaml"
   CADENCE_FILE="/tmp/${USER}_bashrc_version_check_timer"
   [[ ! -f "$CADENCE_FILE" ]] && touch "$CADENCE_FILE"
@@ -53,7 +52,6 @@ __check_bashrc_update() {
   # Exit if within cadence period and cached result was false
   [[ $(( $(date +%s) - $(stat "$CADENCE_FILE" -c %Y) )) -le 10 ]] && [[ ! -s "$CACHED_RESULT_FILE" ]] && return 0
   if [[ $(( $(date +%s) - $(stat "$CADENCE_FILE" -c %Y) )) -le 10 ]] && [[ -s "$CACHED_RESULT_FILE" ]]; then
-    PADDING=$(printf '%*s' ${#FUNCNAME[*]} '')
     loggerx ERROR "${FUNCNAME[*]}: Rate limit exceeded. Using cached result.
                    Limit resets in: $(( 10 - ($(date +%s) - $(stat "$CADENCE_FILE" -c %Y)) )) seconds."
     cat "$CACHED_RESULT_FILE"
@@ -91,8 +89,8 @@ shopt -s histappend
 
 [[ -d ~/.history ]] || mkdir --mode=0700 ~/.history
 [[ -d ~/.history ]] && chmod 0700 ~/.history
-touch "$HOME/.history/history.$(date --utc +'%Y-%m-%dT%H-%M-%SZ').$$.hist"
 HISTFILE="$HOME/.history/history.$(date --utc +'%Y-%m-%dT%H-%M-%SZ').$$.hist"
+touch "$HISTFILE"
 HISTTIMEFORMAT="%FT%T "
 HISTFILESIZE=20480
 HISTSIZE=2048
@@ -205,7 +203,7 @@ __permissions_checks() {
   for i in ${!permissions_dict[@]}; do
     if [[ -e $(eval echo "$i") ]]; then
       if [[ "$(stat -c "%a" "$(eval echo "$i")")" != "${permissions_dict[$i]}" ]]; then
-        loggerx WARNING "Permissions for '$(eval echo \"$i\")' ($(stat -c "%a" "$(eval echo \"$i\")")) are incorrect. Recommended: ${permissions_dict[$i]}."
+        loggerx WARNING "Permissions for '$(eval echo \""$i"\")' ($(stat -c "%a" "$(eval echo \""$i"\")")) are incorrect. Recommended: ${permissions_dict[$i]}."
       fi
     fi
   done

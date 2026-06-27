@@ -79,9 +79,11 @@ __update_bashrc() {
   # TASK="Update local .bashrc_user_gist"
   # mv "$LOCAL_FILE.new" "$LOCAL_FILE"; rc 0 KILL
   # loggerx SUCCESS ".bashrc_user_gist updated. Run 'source ~/.bashrc_user_gist', or 'urc' to apply."
+  # shellcheck disable=SC2034
   TASK="Detect target rc file"; et
   [[ -f $HOME/.bash_profile && ${SHELL##*/} =~ "bash" ]] && TARG="$HOME/.bash_profile" # MacOS Bash
   [[ -f $HOME/.zshrc && ${SHELL##*/} =~ "zsh" ]] && TARG="$HOME/.zshrc"                # MacOS ZSH
+  # shellcheck disable=SC2034
   [[ -f $HOME/.bashrc && ${SHELL##*/} =~ "bash" ]] && TARG="$HOME/.bashrc"             # Linux
   rc 0 KILL
   BASH_RC_REPO="git@github.com:AlexAtkinson/bashrc.git"

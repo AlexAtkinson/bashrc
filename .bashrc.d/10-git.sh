@@ -42,6 +42,7 @@ check_ssh_authentication_to_github() {
 #   $CONFIG_REPO
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 check_ssh_authentication_to_config_repo() {
+  # shellcheck disable=SC2034
   TASK="Test SSH Authentication to Private Config Repo"; et
   git ls-remote "$CONFIG_REPO" >/dev/null 2>&1
   rc 0
