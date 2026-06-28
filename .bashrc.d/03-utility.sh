@@ -567,6 +567,7 @@ alias ls='eza                             \
             --group                       \
             --group-directories-first     \
             --time-style '+%FT%TZ''            # Show long ISO time format
+alias ll='ls -lh'                                          # Long listing, human-readable sizes
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Clipboard helpers
