@@ -1387,3 +1387,44 @@ __vscode_spelling_sync() {
 }
 
 alias vscode-spell-sync='__vscode_spelling_sync'
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Snapper verification cheat sheet.
+# A simpler, more direct reference than the man page for
+# confirming a btrfs + snapper layout is wired up correctly.
+# Outputs:
+#   - The commands to verify each layer and what to look for.
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+snapper-help() {
+  cat << 'EOF'
+After running the playbook, these commands verify each layer:
+
+# 1. Config exists and timeline limits are set correctly
+sudo cat /etc/snapper/configs/root | grep TIMELINE
+
+# 2. @.snapshots is a proper top-level subvolume (not nested)
+sudo btrfs subvolume list / | grep snapshots
+
+# 3. /.snapshots is mounted from the right subvolume (not just a plain dir)
+findmnt /.snapshots
+
+# 4. Take a manual snapshot and confirm it lands in the right place
+sudo snapper -c root create --description "test"
+sudo snapper -c root list
+
+# 5. Confirm the snapshot is a subvolume under @.snapshots, not @rootfs
+sudo btrfs subvolume list / | grep snapshots
+
+What you're looking for:
+  - findmnt /.snapshots should show the SAME device as / with
+    subvol=@.snapshots in options -- not empty.
+  - btrfs subvolume list / should show something like
+    path @.snapshots/1/snapshot -- the path starting with
+    @.snapshots/, not @rootfs/.snapshots/.
+  - snapper list should show your test snapshot with a numeric ID.
+
+If btrfs subvolume list / shows @rootfs/.snapshots/... instead of
+@.snapshots/..., it means /.snapshots isn't mounted from the top-level
+subvolume -- the fstab entry or the mount step didn't take.
+EOF
+}
