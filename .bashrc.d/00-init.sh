@@ -166,6 +166,144 @@ tmux*|xterm*|rxvt*|screen)
 esac
 PROMPT_DIRTRIM=2
 
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Helper definition guards
+# - Avoid defining local helpers when an executable with the
+#   same name is already on PATH or a function already exists.
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+__bashrc_has_helper() {
+  type -P "$1" >/dev/null 2>&1 || declare -F "$1" >/dev/null 2>&1
+}
+
+
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Helper for `date`.
+# Arguments:
+#   -s       Optionally format short -- without nano.
+#   -f       Optionally format output for filenames.
+#            This option excludes nano component.
+#            IE: 1970-01-01T00-00-00Z
+# Outputs:
+#   - Date format compliant with ISO8601 + nano to the third
+#     place in UTC. IE: 1970-01-01T00:00:00.000Z.
+#   - Others as described in above arguments.
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# shellcheck disable=2120
+if ! __bashrc_has_helper dts; then
+  function dts() {
+    case "$1" in
+      '-f') date --utc +'%Y-%m-%dT%H-%M-%SZ' ;;
+      '-s') date --utc +'%FT%TZ' ;;
+       *) date --utc +'%FT%T.%3NZ' ;;
+    esac
+  }
+fi
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Syslog-style exit code handling with colors to improve DX.
+# Notes:
+#   - User friendly way of achieving consistent log and
+#     script output.
+#   - Named loggerx to avoid clobbering logger if present.
+#   - There is no 9th severity level in RFC5424.
+#   - Accepts multi-line logging.
+#     IE: loggerx INFO "This is a
+#                       multi-line
+#                       log entry"
+#   - Includes inline color dict for portability
+# Globals:
+#   LOG_TO_FILE
+#   LOG_FILE
+# Arguments:
+#   - $1    Log Level
+#   - $2-   Message
+# Depends On:
+#   - function: dts
+# Cyclomatic Complexity: 10
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# shellcheck disable=2034,2001
+if ! __bashrc_has_helper loggerx; then
+  loggerx() {
+     local MSG LOG RAW S C C_EMERGENCY C_ALERT C_CRITICAL \
+           C_ERROR C_WARNING C_NOTICE C_INFO C_DEBUG C_SUCCESS
+    # Reverse lookup dict
+    C_EMERGENCY='\e[01;30;41m' # EMERGENCY
+    C_ALERT='\e[01;31;43m'     # ALERT
+    C_CRITICAL='\e[01;97;41m'  # CRITICAL
+    C_ERROR='\e[01;31m'        # ERROR
+    C_WARNING='\e[01;33m'      # WARNING
+    C_NOTICE='\e[01;30;107m'   # NOTICE
+    C_INFO='\e[01;39m'         # INFO
+    C_DEBUG='\e[01;97;46m'     # DEBUG
+    C_SUCCESS='\e[01;32m'      # SUCCESS
+    # Color lookup & spacing
+    case $1 in
+      "EMERGENCY") C="C_${1}"; S=$(printf "%-39s" '') ;;
+      "ALERT")     C="C_${1}"; S=$(printf "%-35s" '') ;;
+      "CRITICAL")  C="C_${1}"; S=$(printf "%-38s" '') ;;
+      "ERROR")     C="C_${1}"; S=$(printf "%-35s" '') ;;
+      "WARNING")   C="C_${1}"; S=$(printf "%-37s" '') ;;
+      "NOTICE")    C="C_${1}"; S=$(printf "%-36s" '') ;;
+      "INFO")      C="C_${1}"; S=$(printf "%-34s" '') ;;
+      "DEBUG")     C="C_${1}"; S=$(printf "%-35s" '') ;;
+      "SUCCESS")   C="C_${1}"; S=$(printf "%-37s" '') ;;
+      *)           loggerx ERROR "Invalid log level: '$1'!"
+                   return 1 ;;
+    esac
+    # Final formatting
+    MSG=$(printf '%b' "$(dts) ${!C}${1}\e[0m: $(sed 's/^ \+//g'<<<"${*:2}")")
+    LOG=$(sed -z 's/\n$//g'<<<"${MSG}" | sed -z "s/\n/\n${S}/g")
+    RAW="$THIS_SCRIPT ${1}: $(sed 's/  */ /g'<<<"${*:2}")"
+    # Main Operation
+    if [[ "$LOG_TO_FILE" == "true" ]]; then
+      echo "$LOG" | tee -a "$LOG_FILE"
+    else
+      echo "$LOG"
+    fi
+    echo "$RAW" | logger
+  }
+fi
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# 'et' (echo task) and 'rc' (result check) provide a simple
+# and consistent method of exit code validation and logging.
+# Arguments:
+#   $TASK
+# Depends On:
+#   - function: loggerx
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+if ! __bashrc_has_helper et; then
+  et() { loggerx INFO "START: $TASK..."; }
+fi
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# 'et' (echo task) and 'rc' (result check) provide a simple
+# and consistent method of exit code validation and logging.
+# Arguments:
+#   - $1    The expected exit code.
+#   - $2    If KILL is passed then exit with passed exit
+#           code.
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+if ! __bashrc_has_helper rc; then
+  rc() {
+    local EXIT_CODE=$?
+    if [[ "$1" -eq "$EXIT_CODE" ]] ; then
+      loggerx SUCCESS "$TASK."
+    else
+      loggerx ERROR "$TASK (exit code: $EXIT_CODE -- expected code: $1)"
+      if [[ "$2" == "KILL" ]]; then
+        # If function, then return
+        if [[ "${FUNCNAME[*]:1}" != "" ]] && [[ "${FUNCNAME[-1]}" != "main" ]]; then
+          return "$EXIT_CODE"
+        fi
+        exit "$EXIT_CODE"
+      fi
+    fi
+  }
+fi
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Node Version Manager
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
