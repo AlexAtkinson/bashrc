@@ -274,9 +274,7 @@ fi
 # Depends On:
 #   - function: loggerx
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-if ! __bashrc_has_helper et; then
-  et() { loggerx INFO "START: $TASK..."; }
-fi
+et() { loggerx INFO "START: $TASK..."; }
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # 'et' (echo task) and 'rc' (result check) provide a simple
@@ -286,23 +284,21 @@ fi
 #   - $2    If KILL is passed then exit with passed exit
 #           code.
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-if ! __bashrc_has_helper rc; then
-  rc() {
-    local EXIT_CODE=$?
-    if [[ "$1" -eq "$EXIT_CODE" ]] ; then
-      loggerx SUCCESS "$TASK."
-    else
-      loggerx ERROR "$TASK (exit code: $EXIT_CODE -- expected code: $1)"
-      if [[ "$2" == "KILL" ]]; then
-        # If function, then return
-        if [[ "${FUNCNAME[*]:1}" != "" ]] && [[ "${FUNCNAME[-1]}" != "main" ]]; then
-          return "$EXIT_CODE"
-        fi
-        exit "$EXIT_CODE"
+rc() {
+  local EXIT_CODE=$?
+  if [[ "$1" -eq "$EXIT_CODE" ]] ; then
+    loggerx SUCCESS "$TASK."
+  else
+    loggerx ERROR "$TASK (exit code: $EXIT_CODE -- expected code: $1)"
+    if [[ "$2" == "KILL" ]]; then
+      # If function, then return
+      if [[ "${FUNCNAME[*]:1}" != "" ]] && [[ "${FUNCNAME[-1]}" != "main" ]]; then
+        return "$EXIT_CODE"
       fi
+      exit "$EXIT_CODE"
     fi
-  }
-fi
+  fi
+}
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Node Version Manager
